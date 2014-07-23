@@ -2,18 +2,18 @@
 namespace KissMVP;
 
 /**
- * All presenter factories must implement this interface to ensure they can
- * be created by the routeToPresenter function.
+ * All controller factories must implement this interface to ensure they can
+ * be created by the routeToController function.
  *
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
  * @package   KissMVP
  */
-interface PresenterFactoryInterface
+interface ControllerBuilderInterface
 {
     /**
-     * @return Presenter
+     * @return Controller
      */
     public static function create();
 }

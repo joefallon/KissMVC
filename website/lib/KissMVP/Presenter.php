@@ -9,7 +9,7 @@ require_once(LIB_PATH . '/KissMVP/Application.php');
  * @license   MIT
  * @package   KissMVP
  */
-abstract class Presenter
+abstract class Controller
 {
     /** @var string */
     private $_layoutPath;

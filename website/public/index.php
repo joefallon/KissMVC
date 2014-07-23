@@ -28,7 +28,7 @@ define('CACHE_PATH',        realpath(BASE_PATH . '/cache'));
 define('CONFIG_PATH',       realpath(BASE_PATH . '/config'));
 define('LOGS_PATH',         realpath(BASE_PATH . '/logs'));
 
-define('PRESENTERS_PATH',   realpath(APP_PATH  . '/presenters'));
+define('PRESENTERS_PATH',   realpath(APP_PATH  . '/controllers'));
 define('DOMAIN_PATH',       realpath(APP_PATH  . '/domain-classes'));
 define('ENTITIES_PATH',     realpath(APP_PATH  . '/entities'));
 define('MODELS_PATH',       realpath(APP_PATH  . '/models'));

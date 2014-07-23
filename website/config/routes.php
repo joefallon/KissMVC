@@ -2,16 +2,16 @@
 /**
  * @param string $route
  *
- * @return \KissMVP\Presenter
+ * @return \KissMVP\Controller
  */
-function routeToPresenter($route)
+function routeToController($route)
 {
     switch($route)
     {
         case 'default':
-            return IndexPresenterFactory::create();
+            return IndexControllerBuilder::create();
         case 'page-with-parameters':
-            return PageWithParametersPresenterFactory::create();
+            return PageWithParametersControllerBuilder::create();
         default:
             return null;
     }

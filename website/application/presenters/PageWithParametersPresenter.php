@@ -1,12 +1,12 @@
 <?php
-use KissMVP\Presenter;
+use KissMVP\Controller;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
  */
-class PageWithParametersPresenter extends Presenter
+class PageWithParametersController extends Controller
 {
     public function  __construct()
     {

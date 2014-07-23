@@ -1,7 +1,7 @@
 <?php
 namespace KissMVP;
 
-require_once(LIB_PATH . '/KissMVP/FrontPresenter.php');
+require_once(LIB_PATH . '/KissMVP/FrontController.php');
 
 
 /**
@@ -82,8 +82,8 @@ class Application
         self::checkSsl();
         self::setTimeZone();
 
-        $frontPresenter = new FrontPresenter();
-        $frontPresenter->routeRequest();
+        $frontController = new FrontController();
+        $frontController->routeRequest();
     }
 
 

@@ -17,7 +17,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR
 
 // Tests Include Paths
 set_include_path(get_include_path() . PATH_SEPARATOR
-                 . realpath(BASE_PATH . '/tests/application/presenters'));
+                 . realpath(BASE_PATH . '/tests/application/controllers'));
 set_include_path(get_include_path() . PATH_SEPARATOR
                  . realpath(BASE_PATH . '/tests/application/domain-classes'));
 set_include_path(get_include_path() . PATH_SEPARATOR
@@ -29,7 +29,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR
 
 // Application Include Paths
 set_include_path(get_include_path() . PATH_SEPARATOR
-                 . realpath(BASE_PATH . '/application/presenters'));
+                 . realpath(BASE_PATH . '/application/controllers'));
 set_include_path(get_include_path() . PATH_SEPARATOR
                  . realpath(BASE_PATH . '/application/domain-classes'));
 set_include_path(get_include_path() . PATH_SEPARATOR
