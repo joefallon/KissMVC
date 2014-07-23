@@ -1,5 +1,5 @@
 <?php
-use KissMVP\AutoLoader;
+use KissMVC\AutoLoader;
 
 // Set the timezone.
 date_default_timezone_set('UTC');
@@ -45,6 +45,6 @@ define('DB_HOST', 'localhost');
 define('DB_USER', 'username');
 define('DB_PASS', 'password');
 
-require_once(BASE_PATH . '/lib/KissMVP/AutoLoader.php');
+require_once(BASE_PATH . '/lib/KissMVC/AutoLoader.php');
 AutoLoader::registerAutoLoad();
 

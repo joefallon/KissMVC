@@ -1,5 +1,5 @@
 <?php
-use KissMVP\Controller;
+use KissMVC\Controller;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>

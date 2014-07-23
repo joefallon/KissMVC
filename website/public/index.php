@@ -4,8 +4,8 @@
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
  */
-use KissMVP\AutoLoader;
-use KissMVP\Application;
+use KissMVC\AutoLoader;
+use KissMVC\Application;
 
 // Define the application environment.
 if(getenv('APPLICATION_ENV') == null)
@@ -47,11 +47,11 @@ set_include_path( get_include_path() . ':'
 require_once(CONFIG_PATH . '/routes.php');
 
 // Load the main application configuration.
-require_once(LIB_PATH . '/KissMVP/Application.php');
+require_once(LIB_PATH . '/KissMVC/Application.php');
 Application::loadConfiguration(CONFIG_PATH . '/main.php');
 
 // Initialize the class autoloader.
-require_once(LIB_PATH . '/KissMVP/AutoLoader.php');
+require_once(LIB_PATH . '/KissMVC/AutoLoader.php');
 AutoLoader::registerAutoLoad();
 
 // Perform application bootstrapping (e.g. initialize the database, etc).

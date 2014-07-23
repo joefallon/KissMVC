@@ -6,7 +6,7 @@ $config = array();
 | Base Site URL
 |--------------------------------------------------------------------------
 |
-| URL to your KissMVP root. Typically this will be your base URL,
+| URL to your KissMVC root. Typically this will be your base URL,
 | ***WITHOUT*** a trailing slash:
 |
 |	http://example.com
@@ -20,7 +20,7 @@ if(APPLICATION_ENV == 'production')
 else
 {
     // Development URL
-    $config['base_url']	= 'http://localhost:10080/KissMVP/website/public';
+    $config['base_url']	= 'http://localhost:10080/KissMVC/website/public';
 }
 
 /*

@@ -1,5 +1,5 @@
 <?php
-namespace KissMVP;
+namespace KissMVC;
 
 /**
  * All controller factories must implement this interface to ensure they can
@@ -8,7 +8,7 @@ namespace KissMVP;
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
- * @package   KissMVP
+ * @package   KissMVC
  */
 interface ControllerBuilderInterface
 {

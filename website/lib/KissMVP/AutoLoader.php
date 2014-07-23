@@ -1,11 +1,11 @@
 <?php
-namespace KissMVP;
+namespace KissMVC;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
- * @package   KissMVP
+ * @package   KissMVC
  */
 class AutoLoader
 {

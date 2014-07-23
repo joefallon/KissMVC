@@ -1,14 +1,14 @@
 <?php
-namespace KissMVP;
+namespace KissMVC;
 
-require_once(LIB_PATH . '/KissMVP/Application.php');
-require_once(LIB_PATH . '/KissMVP/Controller.php');
+require_once(LIB_PATH . '/KissMVC/Application.php');
+require_once(LIB_PATH . '/KissMVC/Controller.php');
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
- * @package   KissMVP
+ * @package   KissMVC
  */
 class FrontController
 {

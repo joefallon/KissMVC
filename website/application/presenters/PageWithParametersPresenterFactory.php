@@ -1,5 +1,5 @@
 <?php
-use KissMVP\ControllerBuilderInterface;
+use KissMVC\ControllerBuilderInterface;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>

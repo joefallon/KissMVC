@@ -2,7 +2,7 @@
 /**
  * @param string $route
  *
- * @return \KissMVP\Controller
+ * @return \KissMVC\Controller
  */
 function routeToController($route)
 {
