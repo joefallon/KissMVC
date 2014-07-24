@@ -6,8 +6,8 @@ date_default_timezone_set('UTC');
 
 // Specify the application pathing.
 define('BASE_PATH', realpath(__DIR__ . '/../../'));
-define('LOG_NAME', date('Y-m-d') . '.log');
-define('LOG_PATH', realpath(BASE_PATH . '/tests/logs') . '/' . LOG_NAME);
+define('LOG_NAME',  date('Y-m-d') . '.log');
+define('LOG_PATH',  realpath(BASE_PATH . '/tests/logs') . '/' . LOG_NAME);
 
 // Library Include Paths
 set_include_path(get_include_path() . PATH_SEPARATOR
