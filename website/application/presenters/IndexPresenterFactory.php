@@ -1,16 +1,16 @@
 <?php
-use KissMVC\ControllerBuilderInterface;
+use KissMVP\PresenterFactoryInterface;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
  */
-class IndexControllerBuilder implements ControllerBuilderInterface
+class IndexPresenterFactory implements PresenterFactoryInterface
 {
     public static function create()
     {
-        return new IndexController();
+        return new IndexPresenter();
     }
 
 }

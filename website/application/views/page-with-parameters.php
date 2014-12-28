@@ -1,4 +1,4 @@
-<?php /** @var $this PageWithParametersController */ ?><pre>
+<?php /** @var $this PageWithParametersPresenter */ ?><pre>
 <?php
 $reqParams = $this->getRequestParameters();
 

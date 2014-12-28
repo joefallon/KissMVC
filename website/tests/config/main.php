@@ -1,13 +1,13 @@
 <?php
-use KissMVC\AutoLoader;
+use JoeFallon\AutoLoader;
 
 // Set the timezone.
 date_default_timezone_set('UTC');
 
 // Specify the application pathing.
 define('BASE_PATH', realpath(__DIR__ . '/../../'));
-define('LOG_NAME',  date('Y-m-d') . '.log');
-define('LOG_PATH',  realpath(BASE_PATH . '/tests/logs') . '/' . LOG_NAME);
+define('LOG_NAME', date('Y-m-d') . '.log');
+define('LOG_PATH', realpath(BASE_PATH . '/tests/logs') . '/' . LOG_NAME);
 
 // Library Include Paths
 set_include_path(get_include_path() . PATH_SEPARATOR
@@ -17,7 +17,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR
 
 // Tests Include Paths
 set_include_path(get_include_path() . PATH_SEPARATOR
-                 . realpath(BASE_PATH . '/tests/application/controllers'));
+                 . realpath(BASE_PATH . '/tests/application/presenters'));
 set_include_path(get_include_path() . PATH_SEPARATOR
                  . realpath(BASE_PATH . '/tests/application/domain-classes'));
 set_include_path(get_include_path() . PATH_SEPARATOR
@@ -29,7 +29,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR
 
 // Application Include Paths
 set_include_path(get_include_path() . PATH_SEPARATOR
-                 . realpath(BASE_PATH . '/application/controllers'));
+                 . realpath(BASE_PATH . '/application/presenters'));
 set_include_path(get_include_path() . PATH_SEPARATOR
                  . realpath(BASE_PATH . '/application/domain-classes'));
 set_include_path(get_include_path() . PATH_SEPARATOR
@@ -45,6 +45,6 @@ define('DB_HOST', 'localhost');
 define('DB_USER', 'username');
 define('DB_PASS', 'password');
 
-require_once(BASE_PATH . '/lib/KissMVC/AutoLoader.php');
+require_once(BASE_PATH . '/vendor/autoload.php');
 AutoLoader::registerAutoLoad();
 

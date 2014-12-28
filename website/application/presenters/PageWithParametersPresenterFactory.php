@@ -1,15 +1,15 @@
 <?php
-use KissMVC\ControllerBuilderInterface;
+use KissMVP\PresenterFactoryInterface;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
  */
-class PageWithParametersControllerBuilder implements ControllerBuilderInterface
+class PageWithParametersPresenterFactory implements PresenterFactoryInterface
 {
     public static function create()
     {
-        return new PageWithParametersController();
+        return new PageWithParametersPresenter();
     }
 }

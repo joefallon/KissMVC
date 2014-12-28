@@ -1,15 +1,14 @@
 <?php
-namespace KissMVC;
+namespace KissMVP;
 
-require_once(LIB_PATH . '/KissMVC/Application.php');
+require_once(LIB_PATH . '/KissMVP/Application.php');
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
- * @package   KissMVC
  */
-abstract class Controller
+abstract class Presenter
 {
     /** @var string */
     private $_layoutPath;

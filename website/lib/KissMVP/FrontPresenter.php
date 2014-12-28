@@ -1,49 +1,45 @@
 <?php
-namespace KissMVC;
-
-require_once(LIB_PATH . '/KissMVC/Application.php');
-require_once(LIB_PATH . '/KissMVC/Controller.php');
+namespace KissMVP;
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
  * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
  * @license   MIT
- * @package   KissMVC
  */
-class FrontController
+class FrontPresenter
 {
     const DEFAULT_PRESENTER = 'default';
     const HTTP_404_FILENAME = '404.php';
 
 
     /**
-     * This method routes the request to the correct controller, provides the
-     * controller with the request parameters, executes the controller, and then
-     * tells the controller to render the page.
+     * This method routes the request to the correct presenter, provides the
+     * presenter with the request parameters, executes the presenter, and then
+     * tells the presenter to render the page.
      */
     public function routeRequest()
     {
         $requestParameters = $this->getRequestParameters();
-        $controller = null;
+        $presenter = null;
 
         if($requestParameters == null)
         {
-            // No parameters were supplied. Therefore, route the the default controller.
-            $controller = routeToController(self::DEFAULT_PRESENTER);
+            // No parameters were supplied. Therefore, route the the default presenter.
+            $presenter = routeToPresenter(self::DEFAULT_PRESENTER);
         }
         else
         {
             $pageName  = $requestParameters[0];
-            $controller = routeToController($pageName);
+            $presenter = routeToPresenter($pageName);
 
             // Remove non-parameters (i.e. the page name) from the array.
             unset($requestParameters[0]);
             $requestParameters = array_values($requestParameters);
         }
 
-        if($controller == null)
+        if($presenter == null)
         {
-            // A page was specified. However its controller does not exist.
+            // A page was specified. However its presenter does not exist.
             // Therefore, redirect to the 404 page.
             $_SERVER['REDIRECT_STATUS'] = 404;
             header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
@@ -55,9 +51,9 @@ class FrontController
             die();
         }
 
-        $controller->setRequestParameters($requestParameters);
-        $controller->execute();
-        $controller->renderLayout();
+        $presenter->setRequestParameters($requestParameters);
+        $presenter->execute();
+        $presenter->renderLayout();
     }
 
 
