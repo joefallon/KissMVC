@@ -1,9 +1,9 @@
-KissMVP
+KissMVC
 =======
 
 By [Joe Fallon](http://blog.joefallon.net/)
 
-KissMVP is a Keep-It-Simple-Straightforward, and fast barebones MVP framework.
+KissMVC is a Keep-It-Simple-Straightforward, and fast barebones MVP framework.
 
 It includes the following features:
 
@@ -11,12 +11,12 @@ It includes the following features:
 *   Routing is kept extremely simple and quick.
 *   All publicly accessible assets are located in a single directory for
     maximum safety.
-*   KissMVP is extremely simple to fully understand and get up to speed
+*   KissMVC is extremely simple to fully understand and get up to speed
     with. No more than 20-25 minutes should be required to fully understand
     KissMVC and all of its' code.
 *   KissMVC promotes good software engineering and web application development
     practices by promoting the use of database migrations, table gateways,
-    models, presenters, domain specific classes, layouts, views, view partials,
+    models, Controllers, domain specific classes, layouts, views, view partials,
     and all of the other goodies you may like.
 *   The amount of framework code is kept to a minimum. We assume you have your
     favorite ORM or logging library and plan to use that.
@@ -24,7 +24,7 @@ It includes the following features:
 Installation
 ------------
 
-Since KissMVP is both a small library and a folder structure for organizing
+Since KissMVC is both a small library and a folder structure for organizing
 your project it is not packaged as a [Composer](https://getcomposer.org/)
 library. Therefore, to install it go ahead and click the "Download Zip" button on the
 right side of the page.
@@ -38,13 +38,13 @@ classes.
 Framework Architecture
 ----------------------
 
-KissMVP uses a variation of the
+KissMVC uses a variation of the
 (Front Controller)[http://www.oracle.com/technetwork/java/frontcontroller-135648.html]
 design pattern. The
-[Model-View-Presenter](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93presenter)
+[Model-View-Controller](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93Controller)
 architectural pattern is used as well. Here is an overview of the architecture:
 
-![KissMVP Architecture Overview](http://i.imgur.com/zX2G4KM.png)
+![KissMVC Architecture Overview](http://i.imgur.com/zX2G4KM.png)
 
 When a user visits a page in our application (e.g. /view-posts) there are
 several steps needed to create the page and deliver it to the user. First, unless
@@ -54,11 +54,11 @@ the public folder is executed.
 The index file is responsible for instantiating the classes that start the application.
 Once the classes are instantiated, the `run()` method of the `Application` class is
 called. This method verifies that the site is using SSL if it is configured to,
-sets the default timezone, and instantiates the `FrontPresenter` class to route the
+sets the default timezone, and instantiates the `FrontController` class to route the
 request.
 
-The `FrontPresenter` class splits apart the URL to determine which presenter to
-instantiate. Unlike other frameworks, this one uses one presenter per page. Here
+The `FrontController` class splits apart the URL to determine which Controller to
+instantiate. Unlike other frameworks, this one uses one Controller per page. Here
 is an example of a URL:
 
 ```
@@ -66,17 +66,17 @@ http://myapplication/page-with-parameters/abc/123/xyz
 ```
 
 There are several parts to this URL. Several of them are important to the front
-presenter. First, `page-with-parameters` specifies the presenter to instantiate
+Controller. First, `page-with-parameters` specifies the Controller to instantiate
 to handle this request. Second, `abc`, `123`, and `xyz` are URL parameters that
 get passed to the controller and are available for immediate use. From this
-example the presenter `PageWithParametersPresenter` would be instantiated.
+example the Controller `PageWithParametersController` would be instantiated.
 
-All presenters derive from the base class `Presenter`. The base class presenter
+All Controllers derive from the base class `Controller`. The base class Controller
 provides several useful functions that are useful for most pages
-(e.g. `getPageTitle()`). Typically, the model for the presenter will be passed
-into the presenter constructor as a parameter.
+(e.g. `getPageTitle()`). Typically, the model for the Controller will be passed
+into the Controller constructor as a parameter.
 
-After the presenter for that particular page is constructed, two methods are called
+After the Controller for that particular page is constructed, two methods are called
 in succession. First, `execute()` is called. This is a function is where all logic
 needed to determine what to do with the request should be placed. For example,
 let's assume a form was posted. The contents of the submit button post variable
@@ -84,12 +84,12 @@ would be checked to determine if it is a submission or fresh display of the form
 After the `execute()` function has completed execution, the `renderLayout()` method
 is called. The `renderLayout()` method loads the layout.
 
-Once the is loaded, the layout will call `renderView()` on the presenter to load
+Once the is loaded, the layout will call `renderView()` on the Controller to load
 the view that is specific to that page.
 
-Views should have a one-to-one correspondence with the presenters. Models should also
-have a one-to-one correspondence with the presenters. There are four type of classes
-that models interact with besides presenters. The first type are the domain objects.
+Views should have a one-to-one correspondence with the Controllers. Models should also
+have a one-to-one correspondence with the Controllers. There are four type of classes
+that models interact with besides Controllers. The first type are the domain objects.
 Domain objects are classes containing business logic that is shared among many models
 and other domain objects. The second are the entities. Entities are objects that
 represent a row of a table in a database (e.g. post). The third are the table
@@ -102,12 +102,12 @@ best way to implement the persistence layer. Many people recommend by Doctrine 2
 
 Here is an example of the relationship among several example classes in an application:
 
-![KissMVP - Several Stacks](http://i.imgur.com/6qK6Q2u.png)
+![KissMVC - Several Stacks](http://i.imgur.com/6qK6Q2u.png)
 
 Directory Structure
 -------------------
 
-Here is the directory structure of a KissMVP application:
+Here is the directory structure of a KissMVC application:
 
 ```
 WebsiteName
@@ -122,7 +122,7 @@ WebsiteName
   |     |
   |     +--> models
   |     |
-  |     +--> presenters
+  |     +--> Controllers
   |     |
   |     +--> table-gateways
   |     |
@@ -146,17 +146,17 @@ WebsiteName
   |
   +--> lib
   |     |
-  |     +--> KissMVP
+  |     +--> KissMVC
   |            |
   |            +--> Application.php
   |            |
   |            +--> AutoLoader.php
   |            |
-  |            +--> FrontPresenter.php
+  |            +--> FrontController.php
   |            |
-  |            +--> Presenter.php
+  |            +--> Controller.php
   |            |
-  |            +--> PresenterFactoryInterface.php
+  |            +--> ControllerFactoryInterface.php
   |
   +--> logs
   |
@@ -182,7 +182,7 @@ WebsiteName
          |      |
          |      +--> models
          |      |
-         |      +--> presenters
+         |      +--> Controllers
          |      |
          |      +--> table-gateways
          |
@@ -202,7 +202,7 @@ Typically, `WebsiteName` is changed to match the name of the application.
 *   **WebsiteName/application/domain-classes** - Domain classes are classes that contain
 logic that is specific to the domain and that will be used by several models. Typically,
 they will be used by models, other domain classes. Additionally, they may call other
-domain classes and table gateways. They will never call models or presenters.
+domain classes and table gateways. They will never call models or Controllers.
 *   **WebsiteName/application/entities** - Entities are classes that represent a single
 row within a database. They may represent a single row from more than one table if
 a SQL join is used. Entities may be passed all over the application.
@@ -210,12 +210,12 @@ a SQL join is used. Entities may be passed all over the application.
 structure for a page. The call to `renderView()` will be contained in the layout.
 *   **WebsiteName/application/models** - Models contain page specific logic and
 processing.
-*   **WebsiteName/application/presenters** - Presenters act as the middle-man between
+*   **WebsiteName/application/Controllers** - Controllers act as the middle-man between
 the view and the model. They also define the overall page behavior (e.g. redirect
-to another page on authorization failure?). Presenters present that data from the
+to another page on authorization failure?). Controllers present that data from the
 model to the view and also assist with formatting.
 
-![Presenters](http://i.imgur.com/4vSQAK5.png)
+![Controllers](http://i.imgur.com/4vSQAK5.png)
 
 *   **WebsiteName/application/table-gateways** - Table gateways provide an interface
 to the persistence layer. Typically, CRUD methods are placed in these classes. All
@@ -225,14 +225,14 @@ of HTML can can be reused in multiple locations on single web page or across man
 web pages.
 *   **WebsiteName/application/views** - The view contains the HTML for a single page.
 The view does not contain the layout (e.g. body tag or container). It typically
-has a one-to-one correspondence with the presenters (i.e. one view per presenter).
+has a one-to-one correspondence with the Controllers (i.e. one view per Controller).
 *   **WebsiteName/application/Bootstrapper.php** - The `Bootstrapper` class
 contains a single method where all of the application specific initialization is
 placed. For example, database connection code can be placed here. Typically,
 all of the initialized objects are stored in the registry for easy access anywhere
 in the application.
 
-![Presenters](http://i.imgur.com/cmXjQAo.png)
+![Controllers](http://i.imgur.com/cmXjQAo.png)
 
 *   **WebsiteName/cache** - All your cached files go here if you choose to use
 file-based caching.
@@ -240,8 +240,8 @@ file-based caching.
 are kept in this file along with any application specific application configuration
 except for the routes.
 *   **WebsiteName/config/routes.php** - The routes file contains single method that
-returns a presenter based on the first URL parameter after the domain. If no URL
-parameter is given, then the default (index) presenter is returned.
+returns a Controller based on the first URL parameter after the domain. If no URL
+parameter is given, then the default (index) Controller is returned.
 
 ![Application Configuration](http://i.imgur.com/3sUuTr1.png)
 
@@ -268,7 +268,7 @@ are routed through this file.
 *   **WebsiteName/tests/application/domain-classes** - Tests for domain classes.
 *   **WebsiteName/tests/application/entities** - Tests for entity classes.
 *   **WebsiteName/tests/application/models** - Tests for models.
-*   **WebsiteName/tests/application/presenters** - Tests for presenters.
+*   **WebsiteName/tests/application/Controllers** - Tests for Controllers.
 *   **WebsiteName/tests/application/table-gateways** - Tests for table gateways.
 *   **WebsiteName/tests/config** - Test configuration.
 *   **WebsiteName/tests/lib** - Test specific libraries.
@@ -283,29 +283,29 @@ Routing
 Here is an example `routes.php` file:
 
 ```php
-function routeToPresenter($route)
+function routeToController($route)
 {
     switch($route)
     {
         case 'default':
-            return IndexPresenterFactory::create();
+            return IndexControllerFactory::create();
         case 'page-with-parameters':
-            return PageWithParametersPresenterFactory::create();
+            return PageWithParametersControllerFactory::create();
         default:
             return null;
     }
 }
 ```
 
-Presenters
+Controllers
 ----------
 
-Here is an example default presenter with no URL parameters:
+Here is an example default Controller with no URL parameters:
 
 ```php
-use KissMVP\Presenter;
+use KissMVC\Controller;
 
-class IndexPresenter extends Presenter
+class IndexController extends Controller
 {
     public function  __construct()
     {
@@ -325,12 +325,12 @@ class IndexPresenter extends Presenter
 }
 ```
 
-Here is an example presenter that uses URL parameters:
+Here is an example Controller that uses URL parameters:
 
 ```php
-use KissMVP\Presenter;
+use KissMVC\Controller;
 
-class PageWithParametersPresenter extends Presenter
+class PageWithParametersController extends Controller
 {
     public function  __construct()
     {
@@ -345,19 +345,19 @@ class PageWithParametersPresenter extends Presenter
 }
 ```
 
-Presenter Factories
+Controller Factories
 -------------------
 
-Here is an example presenter factory:
+Here is an example Controller factory:
 
 ```php
-use KissMVP\PresenterFactoryInterface;
+use KissMVC\ControllerFactoryInterface;
 
-class IndexPresenterFactory implements PresenterFactoryInterface
+class IndexControllerFactory implements ControllerFactoryInterface
 {
     public static function create()
     {
-        return new IndexPresenter();
+        return new IndexController();
     }
 
 }
@@ -380,7 +380,7 @@ Views
 Here is an example view:
 
 ```
-<?php /* @var $this IndexPresenter */ ?>
+<?php /* @var $this IndexController */ ?>
 <pre>
 
 Main View:

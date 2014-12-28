@@ -1,21 +1,19 @@
 <?php
-namespace KissMVP;
+namespace KissMVC;
 
-require_once(LIB_PATH . '/KissMVP/FrontPresenter.php');
-require_once(LIB_PATH . '/KissMVP/Presenter.php');
-require_once(LIB_PATH . '/KissMVP/PresenterFactoryInterface.php');
-
+require_once(BASE_PATH . '/lib/KissMVC/FrontController.php');
+require_once(BASE_PATH . '/lib/KissMVC/Controller.php');
+require_once(BASE_PATH . '/lib/KissMVC/ControllerFactoryInterface.php');
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
+ * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
  * @license   MIT
  */
 class Application
 {
     /** @var array */
     protected static $_config;
-
 
     /**
      * This function loads the configuration file from the specified
@@ -40,9 +38,8 @@ class Application
         unset($config);
     }
 
-
     /**
-     * Given the key $registryItemName this function returns the value saved
+     * Given the key $registryItemName, this function returns the value saved
      * in the global registry.
      *
      * @param string $registryItemName
@@ -61,7 +58,6 @@ class Application
         }
     }
 
-
     /**
      * Given the $registryItemName, this function stores the given $registryItem
      * in the registry.
@@ -74,7 +70,6 @@ class Application
         self::$_config[$registryItemName] = $registryItem;
     }
 
-
     /**
      * This function runs the application.
      */
@@ -83,13 +78,16 @@ class Application
         self::checkSsl();
         self::setTimeZone();
 
-        $frontPresenter = new FrontPresenter();
-        $frontPresenter->routeRequest();
+        $frontController = new FrontController();
+        $frontController->routeRequest();
     }
 
+    /*************************************************************************
+     * Protected Functions
+     *************************************************************************/
 
     /**
-     * This method ensures the application redirects to the ssl version of
+     * This function ensures the application redirects to the ssl version of
      * the site if the configuration 'ssl_required' is set to true.
      */
     protected static function checkSsl()
@@ -104,16 +102,16 @@ class Application
 
         if(!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != 'on')
         {
-            // SSL is not active. Therefore, perform redirect to activate it.
+            // SSL is required but not active. Therefore, perform
+            // redirect to activate it.
             $url = 'https://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
             header('Location: ' . $url);
             exit;
         }
     }
 
-
     /**
-     * This method sets the default timezone to the value specified in the
+     * This function sets the default timezone to the value specified in the
      * application configuration.
      */
     protected static function setTimeZone()

@@ -6,7 +6,7 @@ $config = array();
 | Base Site URL
 |--------------------------------------------------------------------------
 |
-| URL to your KissMVP root. Typically this will be your base URL,
+| URL to your KissMVC root. Typically this will be your base URL,
 | ***WITHOUT*** a trailing slash:
 |
 |	http://example.com
@@ -20,7 +20,7 @@ if(APPLICATION_ENV == 'production')
 else
 {
     // Development URL
-    $config['base_url']	= 'http://localhost:10080/KissMVP/website/public';
+    $config['base_url']	= 'http://localhost:10080/KissMVC/website/public';
 }
 
 /*
@@ -90,7 +90,7 @@ $config['timezone'] = 'UTC';
 |--------------------------------------------------------------------------
 |
 */
-$config['views_directory'] = APP_PATH . '/views';
+$config['views_directory'] = BASE_PATH . '/application/views';
 
 /*
 |--------------------------------------------------------------------------
@@ -98,7 +98,7 @@ $config['views_directory'] = APP_PATH . '/views';
 |--------------------------------------------------------------------------
 |
 */
-$config['partials_directory'] = APP_PATH . '/view-partials';
+$config['partials_directory'] = BASE_PATH . '/application/view-partials';
 
 /*
 |--------------------------------------------------------------------------
@@ -106,5 +106,11 @@ $config['partials_directory'] = APP_PATH . '/view-partials';
 |--------------------------------------------------------------------------
 |
 */
-$config['layouts_directory'] = APP_PATH . '/layouts';
+$config['layouts_directory'] = BASE_PATH . '/application/layouts';
 
+
+/*
+|--------------------------------------------------------------------------
+| Place your additional application configuration here.
+|--------------------------------------------------------------------------
+*/

@@ -1,14 +1,14 @@
 <?php
-namespace KissMVP;
+namespace KissMVC;
 
-require_once(LIB_PATH . '/KissMVP/Application.php');
+require_once(BASE_PATH . '/lib/KissMVC/Application.php');
 
 /**
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
+ * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
  * @license   MIT
  */
-abstract class Presenter
+abstract class Controller
 {
     /** @var string */
     private $_layoutPath;
@@ -23,22 +23,19 @@ abstract class Presenter
     /** @var array */
     private $_requestParameters;
 
-
     public function __construct()
     {
         $this->_cssFiles = array();
         $this->_jsFiles  = array();
     }
 
-
     /**
      * This function performs any page specific processing associated with
      * the page. It is called immediately after the class constructor is
      * called. If a page performs no processing, then this function may be
-     * empty.
+     * empty and not overridden.
      */
     public function execute() { }
-
 
     /**
      * This function renders the selected layout.
@@ -48,7 +45,6 @@ abstract class Presenter
         require($this->_layoutPath);
     }
 
-
     /**
      * This function renders the selected view.
      */
@@ -56,31 +52,6 @@ abstract class Presenter
     {
         require($this->_viewPath);
     }
-
-
-    /**
-     * This function returns an array containing the names of all of
-     * the CSS files.
-     *
-     * @return array
-     */
-    public function getCssFiles()
-    {
-        return $this->_cssFiles;
-    }
-
-
-    /**
-     * This function returns an array containing the names of all of
-     * the JavaScript files.
-     *
-     * @return array
-     */
-    public function getJavaScriptFiles()
-    {
-        return $this->_jsFiles;
-    }
-
 
     /**
      * This function renders the specified partial view.
@@ -91,10 +62,32 @@ abstract class Presenter
     public function renderPartial($fileName, $data = array())
     {
         $dir = Application::getRegistryItem('partials_directory');
-
-        require($dir . '/' . $fileName);
+        require("$dir/$fileName");
     }
 
+    /**
+     * This function returns an array containing the names of all of
+     * the CSS files. Iterate through the array of CSS files in the
+     * layout so they may all be included on the page.
+     *
+     * @return array
+     */
+    public function getCssFiles()
+    {
+        return $this->_cssFiles;
+    }
+
+    /**
+     * This function returns an array containing the names of all of
+     * the JavaScript files. Iterate through the array of JavaScript files
+     * in the layout so they may all be included on the page.
+     *
+     * @return array
+     */
+    public function getJavaScriptFiles()
+    {
+        return $this->_jsFiles;
+    }
 
     /**
      * This function returns the base URL of the application.
@@ -105,7 +98,6 @@ abstract class Presenter
     {
         return Application::getRegistryItem('base_url');
     }
-
 
     /**
      * This function returns the application version. It is most useful
@@ -118,7 +110,6 @@ abstract class Presenter
         return Application::getRegistryItem('version');
     }
 
-
     /**
      * This function returns the page title.
      *
@@ -129,11 +120,12 @@ abstract class Presenter
         return $this->_pageTitle;
     }
 
-
     /**
      * This function returns the request parameters of the request. They
-     * occur in the array in the same order in which they appeared in the
-     * request URL.
+     * occur in an array in the same order in which they appeared in the
+     * request URL. For example, assume that the following page URL was
+     * accessed: http://www.myapp.com/example-page/123/abc. The request
+     * parameters array would contain the following: ['123', 'abc']
      *
      * @return array
      */
@@ -142,17 +134,15 @@ abstract class Presenter
         return $this->_requestParameters;
     }
 
-
     /**
      * This function sets the request parameters.
      *
-     * @param array $requestParameters
+     * @param array|null $requestParameters
      */
     public function setRequestParameters($requestParameters)
     {
         $this->_requestParameters = $requestParameters;
     }
-
 
     /**
      * This function returns the value of the specified GET parameter if
@@ -172,7 +162,6 @@ abstract class Presenter
         return null;
     }
 
-
     /**
      * This function returns the value of the specified POST parameter if
      * it exists and null otherwise.
@@ -191,6 +180,9 @@ abstract class Presenter
         return null;
     }
 
+    /*************************************************************************
+     * Protected Functions
+     *************************************************************************/
 
     /**
      * This function sets the layout filename.
@@ -200,9 +192,8 @@ abstract class Presenter
     protected function setLayout($layoutFileName)
     {
         $dir = Application::getRegistryItem('layouts_directory');
-        $this->_layoutPath = $dir . '/' . $layoutFileName;
+        $this->_layoutPath = "$dir/$layoutFileName";
     }
-
 
     /**
      * This function sets the view filename.
@@ -212,9 +203,8 @@ abstract class Presenter
     protected function setViewFileName($viewFileName)
     {
         $dir = Application::getRegistryItem('views_directory');
-        $this->_viewPath = $dir . '/' . $viewFileName;
+        $this->_viewPath = "$dir/$viewFileName";
     }
-
 
     /**
      * This function adds the specified CSS file to the CSS file collection.
@@ -225,7 +215,6 @@ abstract class Presenter
     {
         $this->_cssFiles[] = $cssFile;
     }
-
 
     /**
      * This function adds the specified JavaScript file to the JavaScript file
@@ -238,7 +227,6 @@ abstract class Presenter
         $this->_jsFiles[] = $jsFile;
     }
 
-
     /**
      * This function sets the page title to the specified value.
      *
@@ -246,7 +234,7 @@ abstract class Presenter
      */
     protected function setPageTitle($pageTitle)
     {
-        $pageTitle        = strval($pageTitle);
+        $pageTitle = strval($pageTitle);
         $this->_pageTitle = $pageTitle;
     }
 }

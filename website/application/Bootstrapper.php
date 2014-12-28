@@ -5,9 +5,8 @@
  * anywhere within the application.
  *
  * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2014 Joseph Fallon (All rights reserved)
+ * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
  * @license   MIT
- * @package   KissMVP
  */
 class Bootstrapper
 {
