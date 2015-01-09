@@ -6,6 +6,8 @@ By [Joe Fallon](http://blog.joefallon.net/)
 KissMVC is a [Keep-It-Simple-Stupid](http://en.wikipedia.org/wiki/KISS_principle) 
 and fast barebones MVC framework.
 
+> "Make everything as simple as possible, but not simpler." - Albert Einstein
+
 It includes the following features:
 
 *   A standard folder structure for your application.
