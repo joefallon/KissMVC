@@ -44,7 +44,7 @@ design pattern. The
 [Model-View-Controller](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93Controller)
 architectural pattern is used as well. Here is an overview of the architecture:
 
-![KissMVC Architecture Overview](http://i.imgur.com/zX2G4KM.png)
+![KissMVC Architecture Overview](http://i.imgur.com/yQQARZN.png)
 
 When a user visits a page in our application (e.g. /view-posts) there are
 several steps needed to create the page and deliver it to the user. First, unless
@@ -102,7 +102,7 @@ best way to implement the persistence layer. Many people recommend by Doctrine 2
 
 Here is an example of the relationship among several example classes in an application:
 
-![KissMVC - Several Stacks](http://i.imgur.com/6qK6Q2u.png)
+![KissMVC - Several Stacks](http://i.imgur.com/QXA1vYq.png)
 
 Directory Structure
 -------------------
