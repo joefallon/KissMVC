@@ -6,7 +6,17 @@ By [Joe Fallon](http://blog.joefallon.net/)
 KissMVC is a [Keep-It-Simple-Stupid](http://en.wikipedia.org/wiki/KISS_principle) 
 and fast barebones MVC framework.
 
-> "Make everything as simple as possible, but not simpler." - Albert Einstein
+> "Make everything as simple as possible, but not simpler." -- Albert Einstein
+
+> "Simplicity is the ultimate sophistication." -- Leonardo da Vinci
+
+> "Perfection (in design) is achieved not when there is nothing more to add, but rather when there is nothing more to take away." -- Antoine de Saint-Exupery
+
+> "Simplicity is the soul of efficiency." -- Austin Freeman
+
+> "Simplicity is prerequisite for reliability." --Edsger W.Dijkstra
+
+> "Fools ignore complexity; pragmatists suffer it; experts avoid it; geniuses remove it." -- Alan Perlis
 
 It includes the following features:
 
