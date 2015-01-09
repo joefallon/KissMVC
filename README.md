@@ -3,13 +3,16 @@ KissMVC
 
 By [Joe Fallon](http://blog.joefallon.net/)
 
-KissMVC is a Keep-It-Simple-Straightforward, and fast barebones MVP framework.
+KissMVC is a Keep-It-Simple-Stupid and fast barebones MVC framework.
 
 It includes the following features:
 
-*   A minimum amount of overhead is performed by the framework.
+*   A standard folder structure for your application.
+*   A minimum amount of overhead is imposed by the framework. It is assumed additional 
+    functionality can either be created be created by the developer or included via 
+    Composer.
 *   Routing is kept extremely simple and quick.
-*   All publicly accessible assets are located in a single directory for
+*   All publicly accessible assets are located in a single "public" directory for
     maximum safety.
 *   KissMVC is extremely simple to fully understand and get up to speed
     with. No more than 20-25 minutes should be required to fully understand
@@ -31,15 +34,14 @@ right side of the page.
 
 Once it is unzipped, copy the contents of the "website" folder to your Git
 (or any VCS) repo and commit it. Don't worry about checking in a large amount
-of library code because KissMVC is fully implemented using only five library
-classes.
+of library code because KissMVC is fully implemented using only five classes.
 
 
 Framework Architecture
 ----------------------
 
 KissMVC uses a variation of the
-(Front Controller)[http://www.oracle.com/technetwork/java/frontcontroller-135648.html]
+[Front Controller](http://www.oracle.com/technetwork/java/frontcontroller-135648.html)
 design pattern. The
 [Model-View-Controller](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93Controller)
 architectural pattern is used as well. Here is an overview of the architecture:
@@ -54,8 +56,8 @@ the public folder is executed.
 The index file is responsible for instantiating the classes that start the application.
 Once the classes are instantiated, the `run()` method of the `Application` class is
 called. This method verifies that the site is using SSL if it is configured to,
-sets the default timezone, and instantiates the `FrontController` class to route the
-request.
+sets the default timezone, and then instantiates the `FrontController` class to route 
+the request.
 
 The `FrontController` class splits apart the URL to determine which Controller to
 instantiate. Unlike other frameworks, this one uses one Controller per page. Here
@@ -74,7 +76,7 @@ example the Controller `PageWithParametersController` would be instantiated.
 All Controllers derive from the base class `Controller`. The base class Controller
 provides several useful functions that are useful for most pages
 (e.g. `getPageTitle()`). Typically, the model for the Controller will be passed
-into the Controller constructor as a parameter.
+into the Controller constructor (i.e. this is dependency injection) as a parameter.
 
 After the Controller for that particular page is constructed, two methods are called
 in succession. First, `execute()` is called. This is a function is where all logic
@@ -84,21 +86,26 @@ would be checked to determine if it is a submission or fresh display of the form
 After the `execute()` function has completed execution, the `renderLayout()` method
 is called. The `renderLayout()` method loads the layout.
 
-Once the is loaded, the layout will call `renderView()` on the Controller to load
-the view that is specific to that page.
+Once the layout is loaded, the layout will call `renderView()` on the Controller to 
+load the view that is specific to that page. It is assumed that each page has a single
+view. However, eavh view can include as many "view partials" as needed for maximum
+view code reusability.
 
 Views should have a one-to-one correspondence with the Controllers. Models should also
 have a one-to-one correspondence with the Controllers. There are four type of classes
-that models interact with besides Controllers. The first type are the domain objects.
-Domain objects are classes containing business logic that is shared among many models
-and other domain objects. The second are the entities. Entities are objects that
-represent a row of a table in a database (e.g. post). The third are the table
-gateways that store and fetch entities from the database. The last, and not depicted,
-are any objects from third party vendor code (e.g. monolog).
+that models interact with besides Controllers. 
+
+The first type are the domain objects. Domain objects are classes containing business 
+logic that is shared among many models and other domain objects. The second are 
+the entities. Entities are objects that represent a row of a table in a database 
+(e.g. post). The third are the table gateways that store and fetch entities from 
+the database. The last, and not depicted, are any objects from third party vendor 
+code (e.g. monolog).
 
 Table gateways, entities, models, and domain objects are not included in this
 framework. Instead it is left to the application programmer to decide on the
-best way to implement the persistence layer. Many people recommend by Doctrine 2.
+best way to implement the persistence layer. Many people recommend 
+[Doctrine 2](http://www.doctrine-project.org/projects/orm.html).
 
 Here is an example of the relationship among several example classes in an application:
 
@@ -122,7 +129,7 @@ WebsiteName
   |     |
   |     +--> models
   |     |
-  |     +--> Controllers
+  |     +--> controllers
   |     |
   |     +--> table-gateways
   |     |
@@ -182,7 +189,7 @@ WebsiteName
          |      |
          |      +--> models
          |      |
-         |      +--> Controllers
+         |      +--> controllers
          |      |
          |      +--> table-gateways
          |
@@ -195,42 +202,47 @@ WebsiteName
          +--> index.php
 ```
 
-Typically, `WebsiteName` is changed to match the name of the application.
+Typically, `WebsiteName` is changed to match the name of the application (e.g. MyFaceSpace).
 
 ![Folder Structure Overview](http://i.imgur.com/jBn8bxw.png)
 
 *   **WebsiteName/application/domain-classes** - Domain classes are classes that contain
-logic that is specific to the domain and that will be used by several models. Typically,
-they will be used by models, other domain classes. Additionally, they may call other
-domain classes and table gateways. They will never call models or Controllers.
+logic that is specific to the problem domain the application serves and that will be used 
+by several models. Typically, they will be used by models, other domain classes. 
+Additionally, they may call other domain classes and table gateways. They should never call 
+models or Controllers.
 *   **WebsiteName/application/entities** - Entities are classes that represent a single
 row within a database. They may represent a single row from more than one table if
-a SQL join is used. Entities may be passed all over the application.
+a SQL join is used. Entities may be passed all over the application. They may also include
+logic to validate themselves. Typically, they consist of simple bundles of data.
 *   **WebsiteName/application/layouts** - A layout represents an overall visual
-structure for a page. The call to `renderView()` will be contained in the layout.
+structure for a page. The call to `renderView()` will be contained within the layout.
 *   **WebsiteName/application/models** - Models contain page specific logic and
 processing.
-*   **WebsiteName/application/Controllers** - Controllers act as the middle-man between
+*   **WebsiteName/application/controllers** - Controllers act as the middle-man between
 the view and the model. They also define the overall page behavior (e.g. redirect
 to another page on authorization failure?). Controllers present that data from the
-model to the view and also assist with formatting.
+model to the view and also assist with formatting (e.g. converting a number to a proper 
+currency format).
 
 ![Controllers](http://i.imgur.com/4vSQAK5.png)
 
 *   **WebsiteName/application/table-gateways** - Table gateways provide an interface
-to the persistence layer. Typically, CRUD methods are placed in these classes. All
+to the persistence layer. Typically, 
+[CRUD](http://en.wikipedia.org/wiki/Create,_read,_update_and_delete) 
+(i.e. create, retrieve, update, delete) methods are placed in these classes. All 
 database interaction must go through the table gateways.
 *   **WebsiteName/application/view-partials** - View partials are reusable chunks
 of HTML can can be reused in multiple locations on single web page or across many
 web pages.
 *   **WebsiteName/application/views** - The view contains the HTML for a single page.
 The view does not contain the layout (e.g. body tag or container). It typically
-has a one-to-one correspondence with the Controllers (i.e. one view per Controller).
+has a one-to-one correspondence with the Controllers (i.e. one view per controller class).
 *   **WebsiteName/application/Bootstrapper.php** - The `Bootstrapper` class
-contains a single method where all of the application specific initialization is
-placed. For example, database connection code can be placed here. Typically,
-all of the initialized objects are stored in the registry for easy access anywhere
-in the application.
+contains a single method called `bootstrap()` where all of the application specific 
+initialization is placed. For example, database connection creation code can be placed here. 
+Typically, all of the initialized objects within the Bootstrapper class are stored in 
+the registry for easy access anywhere in the application. 
 
 ![Controllers](http://i.imgur.com/cmXjQAo.png)
 
@@ -291,6 +303,8 @@ function routeToController($route)
             return IndexControllerFactory::create();
         case 'page-with-parameters':
             return PageWithParametersControllerFactory::create();
+        case 'view-items':
+            return ViewItemsControllerFactory::create();
         default:
             return null;
     }
