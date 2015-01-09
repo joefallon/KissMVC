@@ -18,7 +18,7 @@ and fast barebones MVC framework.
 
 > "Fools ignore complexity; pragmatists suffer it; experts avoid it; geniuses remove it." -- Alan Perlis
 
-It includes the following features:
+KissMVC includes the following features:
 
 *   A standard folder structure for your application.
 *   A minimum amount of overhead is imposed by the framework. It is assumed additional 
