@@ -1,10 +1,11 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "a4183e9bc9cd738fb24d277cf495afa3",
+    "hash": "3e6dad6d203fb94b8ed85c53fa97f0db",
+    "content-hash": "45907852b92913565fad051cedb7139f",
     "packages": [
         {
             "name": "joefallon/phpautoloader",
