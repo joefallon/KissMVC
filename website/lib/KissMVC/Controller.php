@@ -123,9 +123,16 @@ abstract class Controller
     /**
      * This function returns the request parameters of the request. They
      * occur in an array in the same order in which they appeared in the
-     * request URL. For example, assume that the following page URL was
-     * accessed: http://www.myapp.com/example-page/123/abc. The request
-     * parameters array would contain the following: ['123', 'abc']
+     * request URL.
+     *
+     * Example: http://www.mysite.com/page-with-parameters/abc/123/xyz
+     *
+     * Array
+     * (
+     *   [0] => abc
+     *   [1] => 123
+     *   [2] => xyz
+     * )
      *
      * @return array
      */
@@ -135,9 +142,21 @@ abstract class Controller
     }
 
     /**
-     * This function sets the request parameters.
+     * This function sets the request parameters. The request parameters
+     * consists of an array of strings. The first parameter after the
+     * controller name segment has an index of 0. The second has an index
+     * of 1, etc.
      *
-     * @param array|null $requestParameters
+     * Example: http://www.mysite.com/page-with-parameters/abc/123/xyz
+     *
+     * Array
+     * (
+     *   [0] => abc
+     *   [1] => 123
+     *   [2] => xyz
+     * )
+     *
+     * @param array $requestParameters
      */
     public function setRequestParameters($requestParameters)
     {
@@ -200,7 +219,7 @@ abstract class Controller
      *
      * @param string $viewFileName
      */
-    protected function setViewFileName($viewFileName)
+    protected function setView($viewFileName)
     {
         $dir = Application::getRegistryItem('views_directory');
         $this->_viewPath = "$dir/$viewFileName";

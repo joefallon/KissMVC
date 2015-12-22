@@ -2,6 +2,8 @@
 namespace KissMVC;
 
 // Load the router.
+use Exception;
+
 require_once(CONFIG_PATH . '/routes.php');
 
 /**
@@ -13,6 +15,7 @@ class FrontController
 {
     const DEFAULT_CONTROLLER = 'default';
     const HTTP_404_FILENAME  = '404.php';
+    const HTTP_500_FILENAME  = '500.php';
 
     /**
      * This method routes the request to the correct controller, provides the
@@ -48,15 +51,34 @@ class FrontController
             // Therefore, redirect to the 404 page.
             $_SERVER['REDIRECT_STATUS'] = 404;
             header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-            header("Status: 404 Not Found");
+            header('Status: 404 Not Found');
             $dir  = Application::getRegistryItem('views_directory');
             $view = $dir . '/' . self::HTTP_404_FILENAME;
             require($view);
-
             die();
         }
 
         $controller->setRequestParameters($requestParameters);
+
+        if(APPLICATION_ENV == 'production')
+        {
+            try
+            {
+                $controller->execute();
+            }
+            catch(Exception $ex)
+            {
+                // An internal server error occurred. Display the 500 page.
+                $_SERVER['REDIRECT_STATUS'] = 500;
+                header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
+                header('Status: 500 Internal Server Error');
+                $dir  = Application::getRegistryItem('views_directory');
+                $view = $dir . '/' . self::HTTP_500_FILENAME;
+                require($view);
+                throw $ex;
+            }
+        }
+
         $controller->execute();
         $controller->renderLayout();
     }

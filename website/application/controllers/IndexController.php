@@ -14,7 +14,7 @@ class IndexController extends Controller
 
         $this->setPageTitle('Index');
         $this->setLayout('default.php');
-        $this->setViewFileName('index.php');
+        $this->setView('index.php');
     }
 
     public function execute() { }

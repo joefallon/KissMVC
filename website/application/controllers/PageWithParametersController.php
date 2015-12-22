@@ -14,8 +14,10 @@ class PageWithParametersController extends Controller
 
         $this->setPageTitle('Page with Parameters');
         $this->setLayout('default.php');
-        $this->setViewFileName('page-with-parameters.php');
+        $this->setView('page-with-parameters.php');
     }
 
-    public function execute() { }
+    public function execute()
+    {
+    }
 }
