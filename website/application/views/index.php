@@ -1,4 +1,4 @@
-<?php /* @var $this IndexPresenter */ ?>
+<?php /* @var $this IndexController */ ?>
 <pre>
 
 Main View:
@@ -9,7 +9,7 @@ Main View:
 
 <ul>
     <li>
-        <a href="<?= $this->getBaseUrl(); ?>/page-with-parameters/abc/123/xyz">
+        <a href="/page-with-parameters/abc/123/xyz">
             Page with Parameters
         </a>
     </li>

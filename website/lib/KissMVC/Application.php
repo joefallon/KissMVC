@@ -1,15 +1,9 @@
 <?php
 namespace KissMVC;
-
 require_once(BASE_PATH . '/lib/KissMVC/FrontController.php');
 require_once(BASE_PATH . '/lib/KissMVC/Controller.php');
 require_once(BASE_PATH . '/lib/KissMVC/ControllerFactoryInterface.php');
 
-/**
- * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
- * @license   MIT
- */
 class Application
 {
     /** @var array */

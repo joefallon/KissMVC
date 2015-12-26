@@ -1,13 +1,7 @@
 <?php
 namespace KissMVC;
-
 require_once(BASE_PATH . '/lib/KissMVC/Application.php');
 
-/**
- * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
- * @license   MIT
- */
 abstract class Controller
 {
     /** @var string */
@@ -87,16 +81,6 @@ abstract class Controller
     public function getJavaScriptFiles()
     {
         return $this->_jsFiles;
-    }
-
-    /**
-     * This function returns the base URL of the application.
-     *
-     * @return string
-     */
-    public function getBaseUrl()
-    {
-        return Application::getRegistryItem('base_url');
     }
 
     /**
@@ -256,4 +240,9 @@ abstract class Controller
         $pageTitle = strval($pageTitle);
         $this->_pageTitle = $pageTitle;
     }
+
+    /**
+     * Override this function to provide custom "500 - Internal Server" error handling.
+     */
+    public function error500() {}
 }

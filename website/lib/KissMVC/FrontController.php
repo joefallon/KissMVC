@@ -1,21 +1,13 @@
 <?php
 namespace KissMVC;
-
-// Load the router.
 use Exception;
-
 require_once(CONFIG_PATH . '/routes.php');
 
-/**
- * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
- * @license   MIT
- */
 class FrontController
 {
     const DEFAULT_CONTROLLER = 'default';
-    const HTTP_404_FILENAME  = '404.php';
-    const HTTP_500_FILENAME  = '500.php';
+    const HTTP_404_VIEW      = '404.php';
+    const HTTP_500_VIEW      = '500.php';
 
     /**
      * This method routes the request to the correct controller, provides the
@@ -47,15 +39,7 @@ class FrontController
 
         if($controller == null)
         {
-            // A page was specified. However its Controller does not exist.
-            // Therefore, redirect to the 404 page.
-            $_SERVER['REDIRECT_STATUS'] = 404;
-            header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
-            header('Status: 404 Not Found');
-            $dir  = Application::getRegistryItem('views_directory');
-            $view = $dir . '/' . self::HTTP_404_FILENAME;
-            require($view);
-            die();
+            $this->display404Page();
         }
 
         $controller->setRequestParameters($requestParameters);
@@ -68,18 +52,14 @@ class FrontController
             }
             catch(Exception $ex)
             {
-                // An internal server error occurred. Display the 500 page.
-                $_SERVER['REDIRECT_STATUS'] = 500;
-                header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
-                header('Status: 500 Internal Server Error');
-                $dir  = Application::getRegistryItem('views_directory');
-                $view = $dir . '/' . self::HTTP_500_FILENAME;
-                require($view);
-                throw $ex;
+                $this->display500Page($controller);
             }
         }
+        else
+        {
+            $controller->execute();
+        }
 
-        $controller->execute();
         $controller->renderLayout();
     }
 
@@ -118,5 +98,37 @@ class FrontController
         {
             return null;
         }
+    }
+
+    /**
+     * A page was specified. However its Controller does not exist. Therefore,
+     * display the 404 page.
+     */
+    private function display404Page()
+    {
+        $_SERVER['REDIRECT_STATUS'] = 404;
+        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+        header('Status: 404 Not Found');
+        $dir = Application::getRegistryItem('views_directory');
+        $view = $dir . '/' . self::HTTP_404_VIEW;
+        require($view);
+        die();
+    }
+
+    /**
+     * An internal server error occurred. Therefore, display the 500 page.
+     *
+     * @param Controller $controller
+     */
+    private function display500Page($controller)
+    {
+        $_SERVER['REDIRECT_STATUS'] = 500;
+        header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
+        header('Status: 500 Internal Server Error');
+        $controller->error500();
+        $dir = Application::getRegistryItem('views_directory');
+        $view = $dir . '/' . self::HTTP_500_VIEW;
+        require($view);
+        die();
     }
 }
