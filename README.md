@@ -444,3 +444,37 @@ View Partial:
 </pre>
 ```
 
+Nginx Config
+-------------
+
+Here is an example nginx configuration. It works identically to the Zend Framework 1 way of
+handling requests.
+
+```
+server {
+    #listen   80; ## listen for ipv4; this line is default and implied
+    #listen   [::]:80 default ipv6only=on; ## listen for ipv6
+ 
+    root /var/www/KissMVC/website/public/;
+    index index.php index.html index.htm;
+ 
+    server_name kissmvc.dev;
+    autoindex off;
+
+    access_log /var/log/nginx/development-access.log;
+    error_log  /var/log/nginx/development-error.log;
+ 
+    location ~ /\. { access_log off; log_not_found off; deny all; }
+    location ~ ~$  { access_log off; log_not_found off; deny all; }
+
+    location / {
+        try_files $uri /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass   127.0.0.1:9000;
+        include        fastcgi_params;
+        fastcgi_param  APPLICATION_ENV development;
+    }
+}
+```
