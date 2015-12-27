@@ -4,7 +4,7 @@ KissMVC
 By [Joe Fallon](http://blog.joefallon.net/)
 
 KissMVC is a [Keep-It-Simple-Stupid](http://en.wikipedia.org/wiki/KISS_principle) 
-and fast barebones MVC framework.
+and fast bare-bones MVC framework.
 
 > "Make everything as simple as possible, but not simpler." -- Albert Einstein
 
@@ -101,7 +101,7 @@ is called. The `renderLayout()` method loads the layout.
 
 Once the layout is loaded, the layout will call `renderView()` on the Controller to 
 load the view that is specific to that page. It is assumed that each page has a single
-view. However, eavh view can include as many "view partials" as needed for maximum
+view. However, each view can include as many "view partials" as needed for maximum
 view code reusability.
 
 Views should have a one-to-one correspondence with the Controllers. Models should also
@@ -215,15 +215,16 @@ WebsiteName
          +--> index.php
 ```
 
-Typically, `WebsiteName` is changed to match the name of the application (e.g. MyFaceSpace).
+Typically, `WebsiteName` is changed to match the name of the application (e.g. 
+MyFaceSpace).
 
 ![Folder Structure Overview](http://i.imgur.com/jBn8bxw.png)
 
 *   **WebsiteName/application/domain-classes** - Domain classes are classes that contain
 logic that is specific to the problem domain the application serves and that will be used 
 by several models. Typically, they will be used by models, other domain classes. 
-Additionally, they may call other domain classes and table gateways. They should never call 
-models or Controllers.
+Additionally, they may call other domain classes and table gateways. They should never 
+call models or Controllers.
 *   **WebsiteName/application/entities** - Entities are classes that represent a single
 row within a database. They may represent a single row from more than one table if
 a SQL join is used. Entities may be passed all over the application. They may also include
@@ -253,9 +254,9 @@ The view does not contain the layout (e.g. body tag or container). It typically
 has a one-to-one correspondence with the Controllers (i.e. one view per controller class).
 *   **WebsiteName/application/Bootstrapper.php** - The `Bootstrapper` class
 contains a single method called `bootstrap()` where all of the application specific 
-initialization is placed. For example, database connection creation code can be placed here. 
-Typically, all of the initialized objects within the Bootstrapper class are stored in 
-the registry for easy access anywhere in the application. 
+initialization is placed. For example, database connection creation code can be placed 
+here. Typically, all of the initialized objects within the Bootstrapper class are stored 
+in the registry for easy access anywhere in the application. 
 
 ![Controllers](http://i.imgur.com/cmXjQAo.png)
 

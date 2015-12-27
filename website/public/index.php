@@ -1,9 +1,4 @@
 <?php
-/**
- * @author    Joseph Fallon <joseph.t.fallon@gmail.com>
- * @copyright Copyright 2015 Joseph Fallon (All rights reserved)
- * @license   MIT
- */
 use JoeFallon\AutoLoader;
 use KissMVC\Application;
 
