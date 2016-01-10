@@ -1,6 +1,8 @@
 <?php
 namespace KissMVC;
+
 use Exception;
+
 require_once(CONFIG_PATH . '/routes.php');
 
 class FrontController
@@ -21,7 +23,7 @@ class FrontController
 
         if($requestParameters == null)
         {
-            // No parameters were supplied. Therefore, route the the default Controller.
+            // No parameters were supplied. Therefore, route to the default Controller.
             // See 'config/routes.php'.
             $controller = routeToController(self::DEFAULT_CONTROLLER);
         }
@@ -32,7 +34,7 @@ class FrontController
             // See 'config/routes.php'.
             $controller = routeToController($pageName);
 
-            // Remove non-parameters (i.e. the page name) from the array.
+            // Remove the page name from the array.
             unset($requestParameters[0]);
             $requestParameters = array_values($requestParameters);
         }
@@ -40,26 +42,11 @@ class FrontController
         if($controller == null)
         {
             $this->display404Page();
+            return;
         }
 
         $controller->setRequestParameters($requestParameters);
-
-        if(APPLICATION_ENV == 'production')
-        {
-            try
-            {
-                $controller->execute();
-            }
-            catch(Exception $ex)
-            {
-                $this->display500Page($controller);
-            }
-        }
-        else
-        {
-            $controller->execute();
-        }
-
+        $controller->execute();
         $controller->renderLayout();
     }
 
@@ -74,7 +61,7 @@ class FrontController
     {
         $requestUri = $_SERVER['REQUEST_URI'];
         $scriptName = $_SERVER['SCRIPT_NAME'];
-        $scriptDir  = dirname($scriptName);
+        $scriptDir = dirname($scriptName);
 
         if($scriptDir != '/')
         {
@@ -90,9 +77,7 @@ class FrontController
         // Convert the segments to an array.
         if(strlen($request) > 0)
         {
-            $requestParams = explode('/', $request);
-
-            return $requestParams;
+            return $this->urlSegments($request);
         }
         else
         {
@@ -100,10 +85,6 @@ class FrontController
         }
     }
 
-    /**
-     * A page was specified. However its Controller does not exist. Therefore,
-     * display the 404 page.
-     */
     private function display404Page()
     {
         $_SERVER['REDIRECT_STATUS'] = 404;
@@ -112,23 +93,17 @@ class FrontController
         $dir = Application::getRegistryItem('views_directory');
         $view = $dir . '/' . self::HTTP_404_VIEW;
         require($view);
-        die();
     }
 
     /**
-     * An internal server error occurred. Therefore, display the 500 page.
+     * @param $request
      *
-     * @param Controller $controller
+     * @return array
      */
-    private function display500Page($controller)
+    private function urlSegments($request)
     {
-        $_SERVER['REDIRECT_STATUS'] = 500;
-        header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
-        header('Status: 500 Internal Server Error');
-        $controller->error500();
-        $dir = Application::getRegistryItem('views_directory');
-        $view = $dir . '/' . self::HTTP_500_VIEW;
-        require($view);
-        die();
+        $requestParams = explode('/', $request);
+
+        return $requestParams;
     }
 }
