@@ -1,8 +1,6 @@
 <?php
 namespace KissMVC;
 
-use Exception;
-
 require_once(CONFIG_PATH . '/routes.php');
 
 class FrontController

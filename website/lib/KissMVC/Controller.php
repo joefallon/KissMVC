@@ -240,9 +240,4 @@ abstract class Controller
         $pageTitle = strval($pageTitle);
         $this->_pageTitle = $pageTitle;
     }
-
-    /**
-     * Override this function to provide custom "500 - Internal Server" error handling.
-     */
-    public function error500() {}
 }
