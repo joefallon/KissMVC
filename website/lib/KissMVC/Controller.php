@@ -1,5 +1,6 @@
 <?php
 namespace KissMVC;
+
 require_once(BASE_PATH . '/lib/KissMVC/Application.php');
 
 abstract class Controller
@@ -36,6 +37,7 @@ abstract class Controller
      */
     public function renderLayout()
     {
+        /** @noinspection PhpIncludeInspection */
         require($this->_layoutPath);
     }
 
@@ -44,6 +46,7 @@ abstract class Controller
      */
     public function renderView()
     {
+        /** @noinspection PhpIncludeInspection */
         require($this->_viewPath);
     }
 
@@ -145,42 +148,6 @@ abstract class Controller
     public function setRequestParameters($requestParameters)
     {
         $this->_requestParameters = $requestParameters;
-    }
-
-    /**
-     * This function returns the value of the specified GET parameter if
-     * it exists and null otherwise.
-     *
-     * @param string $key
-     *
-     * @return null|string
-     */
-    public function getQueryParam($key)
-    {
-        if(isset($_GET[$key]) == true)
-        {
-            return $_GET[$key];
-        }
-
-        return null;
-    }
-
-    /**
-     * This function returns the value of the specified POST parameter if
-     * it exists and null otherwise.
-     *
-     * @param string $key
-     *
-     * @return null|string
-     */
-    public function getPostParam($key)
-    {
-        if(isset($_POST[$key]) == true)
-        {
-            return $_POST[$key];
-        }
-
-        return null;
     }
 
     /*************************************************************************

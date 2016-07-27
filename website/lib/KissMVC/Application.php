@@ -1,5 +1,6 @@
 <?php
 namespace KissMVC;
+
 require_once(BASE_PATH . '/lib/KissMVC/FrontController.php');
 require_once(BASE_PATH . '/lib/KissMVC/Controller.php');
 require_once(BASE_PATH . '/lib/KissMVC/ControllerFactoryInterface.php');
