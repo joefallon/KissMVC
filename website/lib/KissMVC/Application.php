@@ -19,6 +19,7 @@ class Application
     public static function loadConfiguration($configFilePath)
     {
         $config = null;
+        /** @noinspection PhpIncludeInspection */
         require_once($configFilePath);
 
         if(self::$_config != null)

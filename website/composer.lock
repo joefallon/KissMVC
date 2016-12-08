@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "df6e90fa4a56a8ffcf4de37e090e13dc",
+    "hash": "512314961da4af1cec1b0c38e5ce31e9",
     "content-hash": "45907852b92913565fad051cedb7139f",
     "packages": [
         {
             "name": "joefallon/phpautoloader",
-            "version": "v2.0.4",
+            "version": "v2.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/joefallon/phpautoloader.git",
-                "reference": "940cc57d3219d210e0135355bf329d39a26f30fd"
+                "reference": "2df9a6f4bbe4881515e4c4f0e833f0696ffb3543"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/joefallon/phpautoloader/zipball/940cc57d3219d210e0135355bf329d39a26f30fd",
-                "reference": "940cc57d3219d210e0135355bf329d39a26f30fd",
+                "url": "https://api.github.com/repos/joefallon/phpautoloader/zipball/2df9a6f4bbe4881515e4c4f0e833f0696ffb3543",
+                "reference": "2df9a6f4bbe4881515e4c4f0e833f0696ffb3543",
                 "shasum": ""
             },
             "type": "library",
@@ -47,7 +47,7 @@
                 "namespace",
                 "psr-0"
             ],
-            "time": "2015-12-27 17:23:01"
+            "time": "2016-07-27 17:27:06"
         }
     ],
     "packages-dev": [],

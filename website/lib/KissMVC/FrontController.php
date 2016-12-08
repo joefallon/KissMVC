@@ -90,6 +90,7 @@ class FrontController
         header('Status: 404 Not Found');
         $dir = Application::getRegistryItem('views_directory');
         $view = $dir . '/' . self::HTTP_404_VIEW;
+        /** @noinspection PhpIncludeInspection */
         require($view);
     }
 

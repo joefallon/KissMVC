@@ -56,8 +56,7 @@ $config['ssl_required'] = false;
 | Timezone to store times.
 |--------------------------------------------------------------------------
 |
-| Use UTC. Todo: Clean this up.
-| (e.g. America/Anchorage)
+| Use UTC.
 |
 */
 $config['timezone'] = 'UTC';

@@ -59,6 +59,7 @@ abstract class Controller
     public function renderPartial($fileName, $data = array())
     {
         $dir = Application::getRegistryItem('partials_directory');
+        /** @noinspection PhpIncludeInspection */
         require("$dir/$fileName");
     }
 
