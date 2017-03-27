@@ -5,31 +5,31 @@ use JoeFallon\AutoLoader;
 date_default_timezone_set('UTC');
 
 // Specify the application base pathing.
-define('BASE_PATH', realpath(__DIR__ . '/../../'));
+define('BASE_PATH',  realpath(__DIR__ . '/../../'));
+define('APP_PATH',   BASE_PATH . '/application');
+define('TESTS_PATH', BASE_PATH . '/tests');
 
-// Set the path for the log file.
-define('LOG_PATH',  BASE_PATH . '/tests/logs/' . date('Y-m-d') . '.log');
 
 // Set the library include paths.
-set_include_path( get_include_path()         . ':'
-                  . BASE_PATH . '/tests/lib' . ':'
-                  . BASE_PATH . '/lib' );
-
-// Set the tests include paths.
-set_include_path( get_include_path()                                . ':'
-                  . BASE_PATH . '/tests/application/controllers'    . ':'
-                  . BASE_PATH . '/tests/application/domain-classes' . ':'
-                  . BASE_PATH . '/tests/application/entities'       . ':'
-                  . BASE_PATH . '/tests/application/models'         . ':'
-                  . BASE_PATH . '/tests/application/table-gateways' );
+set_include_path( get_include_path() . ':'
+                  . BASE_PATH  . '/lib:'
+                  . TESTS_PATH . '/lib' );
 
 // Set the application include paths.
-set_include_path( get_include_path()                          . ':'
-                  . BASE_PATH . '/application/controllers'    . ':'
-                  . BASE_PATH . '/application/domain-classes' . ':'
-                  . BASE_PATH . '/application/entities'       . ':'
-                  . BASE_PATH . '/application/models'         . ':'
-                  . BASE_PATH . '/application/table-gateways' );
+set_include_path( get_include_path() . ':'
+                  . APP_PATH . '/controllers:'
+                  . APP_PATH . '/domain:'
+                  . APP_PATH . '/entities:'
+                  . APP_PATH . '/gateways:'
+                  . APP_PATH . '/models');
+
+// Set the tests include paths.
+set_include_path( get_include_path() . ':'
+                  . TESTS_PATH . '/controllers:'
+                  . TESTS_PATH . '/domain:'
+                  . TESTS_PATH . '/entities:'
+                  . TESTS_PATH . '/gateways:'
+                  . TESTS_PATH . '/models');
 
 // Set the testing database connection parameters.
 define('DB_NAME', 'dbname');

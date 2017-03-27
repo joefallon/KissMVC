@@ -1,7 +1,7 @@
 <?php
 namespace KissMVC;
 
-require_once(CONFIG_PATH . '/routes.php');
+require_once(APP_PATH . '/config/routes.php');
 
 class FrontController
 {

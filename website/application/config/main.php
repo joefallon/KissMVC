@@ -75,7 +75,7 @@ $config['views_directory'] = BASE_PATH . '/application/views';
 |--------------------------------------------------------------------------
 |
 */
-$config['partials_directory'] = BASE_PATH . '/application/view-partials';
+$config['partials_directory'] = BASE_PATH . '/application/partials';
 
 /*
 |--------------------------------------------------------------------------

@@ -134,7 +134,13 @@ WebsiteName
   |
   +--> application
   |     |
-  |     +--> domain-classes
+  |     +--> config
+  |     |       |
+  |     |       +--> main.php
+  |     |       |
+  |     |       +--> routes.php    
+  |     |
+  |     +--> domain
   |     |
   |     +--> entities
   |     |
@@ -144,21 +150,13 @@ WebsiteName
   |     |
   |     +--> controllers
   |     |
-  |     +--> table-gateways
+  |     +--> gateways
   |     |
-  |     +--> view-partials
+  |     +--> partials
   |     |
   |     +--> views
   |     |
   |     +--> Bootstrapper.php
-  |
-  +--> cache
-  |
-  +--> config
-  |     |
-  |     +--> main.php
-  |     |
-  |     +--> routes.php
   |
   +--> db
   |     |
@@ -178,8 +176,6 @@ WebsiteName
   |            |
   |            +--> ControllerFactoryInterface.php
   |
-  +--> logs
-  |
   +--> public
   |      |
   |      +--> css
@@ -194,23 +190,19 @@ WebsiteName
   |
   +--> tests
          |
-         +--> application
-         |      |
-         |      +--> domain-classes
-         |      |
-         |      +--> entities
-         |      |
-         |      +--> models
-         |      |
-         |      +--> controllers
-         |      |
-         |      +--> table-gateways
+         +--> classes
+         |
+         +--> entities
+         |
+         +--> models
+         |
+         +--> controllers
+         |
+         +--> gateways
          |
          +--> config
          |
          +--> lib
-         |
-         +--> logs
          |
          +--> index.php
 ```
@@ -220,7 +212,7 @@ MyFaceSpace).
 
 ![Folder Structure Overview](http://i.imgur.com/jBn8bxw.png)
 
-*   **WebsiteName/application/domain-classes** - Domain classes are classes that contain
+*   **WebsiteName/application/domain** - Domain classes are classes that contain
 logic that is specific to the problem domain the application serves and that will be used 
 by several models. Typically, they will be used by models, other domain classes. 
 Additionally, they may call other domain classes and table gateways. They should never 
@@ -241,12 +233,12 @@ currency format).
 
 ![Controllers](http://i.imgur.com/4vSQAK5.png)
 
-*   **WebsiteName/application/table-gateways** - Table gateways provide an interface
+*   **WebsiteName/application/gateways** - Table gateways provide an interface
 to the persistence layer. Typically, 
 [CRUD](http://en.wikipedia.org/wiki/Create,_read,_update_and_delete) 
 (i.e. create, retrieve, update, delete) methods are placed in these classes. All 
 database interaction must go through the table gateways.
-*   **WebsiteName/application/view-partials** - View partials are reusable chunks
+*   **WebsiteName/application/partials** - View partials are reusable chunks
 of HTML can can be reused in multiple locations on single web page or across many
 web pages.
 *   **WebsiteName/application/views** - The view contains the HTML for a single page.
@@ -260,14 +252,12 @@ in the registry for easy access anywhere in the application.
 
 ![Controllers](http://i.imgur.com/cmXjQAo.png)
 
-*   **WebsiteName/cache** - All your cached files go here if you choose to use
-file-based caching.
-*   **WebsiteName/config/main.php** - Main application config. Database credentials
-are kept in this file along with any application specific application configuration
-except for the routes.
-*   **WebsiteName/config/routes.php** - The routes file contains single method that
-returns a Controller based on the first URL parameter after the domain. If no URL
-parameter is given, then the default (index) Controller is returned.
+*   **WebsiteName/application/config/main.php** - Main application config. Database 
+credentials are kept in this file along with any application specific application 
+configuration except for the routes.
+*   **WebsiteName/application/config/routes.php** - The routes file contains single 
+method that returns a Controller based on the first URL parameter after the domain. 
+If no URL parameter is given, then the default (index) Controller is returned.
 
 ![Application Configuration](http://i.imgur.com/3sUuTr1.png)
 
@@ -279,7 +269,6 @@ files.
 
 *   **WebsiteName/lib** - Lib contains the framework library and any other third-party
 libraries that do not have Composer support.
-*   **WebsiteName/logs** - Application log files are kept here. Defaults unused.
 *   **WebsiteName/public** - The public folder should be the only folder that is
 accessible to the public and should be set as the document root of the site.
 *   **WebsiteName/public/css** - CSS Files
@@ -291,14 +280,13 @@ are routed through this file.
 ![Document Root](http://i.imgur.com/0ArGVvY.png)
 
 *   **WebsiteName/tests** - All unit and integration tests go here.
-*   **WebsiteName/tests/application/domain-classes** - Tests for domain classes.
-*   **WebsiteName/tests/application/entities** - Tests for entity classes.
-*   **WebsiteName/tests/application/models** - Tests for models.
-*   **WebsiteName/tests/application/Controllers** - Tests for Controllers.
-*   **WebsiteName/tests/application/table-gateways** - Tests for table gateways.
+*   **WebsiteName/tests/domain** - Tests for domain classes.
+*   **WebsiteName/tests/entities** - Tests for entity classes.
+*   **WebsiteName/tests/models** - Tests for models.
+*   **WebsiteName/tests/controllers** - Tests for Controllers.
+*   **WebsiteName/tests/gateways** - Tests for table gateways.
 *   **WebsiteName/tests/config** - Test configuration.
 *   **WebsiteName/tests/lib** - Test specific libraries.
-*   **WebsiteName/tests/logs** - Test logs.
 *   **WebsiteName/tests/index.php** - Test runner.
 
 ![Document Root](http://i.imgur.com/JkyqXRa.png)
@@ -455,27 +443,34 @@ handling requests.
 server {
     #listen   80; ## listen for ipv4; this line is default and implied
     #listen   [::]:80 default ipv6only=on; ## listen for ipv6
- 
-    root /var/www/KissMVC/website/public/;
+
+    root /var/www/KissMVC/website/public;
     index index.php index.html index.htm;
- 
-    server_name kissmvc.dev;
+
+    server_name kissmvc.lemp16.joefallon.net;
     autoindex off;
 
     access_log /var/log/nginx/development-access.log;
     error_log  /var/log/nginx/development-error.log;
- 
+
     location ~ /\. { access_log off; log_not_found off; deny all; }
     location ~ ~$  { access_log off; log_not_found off; deny all; }
+
+    location = /favicon.ico {
+        try_files $uri =204;
+    }
 
     location / {
         try_files $uri /index.php?$args;
     }
 
     location ~ \.php$ {
-        fastcgi_pass   127.0.0.1:9000;
-        include        fastcgi_params;
-        fastcgi_param  APPLICATION_ENV development;
+        try_files $uri =404;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_param APPLICATION_ENV development;
     }
 }
 ```

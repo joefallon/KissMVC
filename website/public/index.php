@@ -16,23 +16,21 @@ else
 }
 
 // Define the include paths.
-define('BASE_PATH',   realpath(__DIR__   . '/../'));
-define('CACHE_PATH',  BASE_PATH . '/cache');
-define('CONFIG_PATH', BASE_PATH . '/config');
-define('LOGS_PATH',   BASE_PATH . '/logs/' . date('Y-m-d') . '.log');
+define('BASE_PATH', realpath(__DIR__   . '/../'));
+define('APP_PATH',  BASE_PATH . '/application');
 
 // Set the application include paths.
 set_include_path( get_include_path() . ':'
-                 . BASE_PATH . '/lib'                        . ':'
-                 . BASE_PATH . '/application/controllers'    . ':'
-                 . BASE_PATH . '/application/domain-classes' . ':'
-                 . BASE_PATH . '/application/entities'       . ':'
-                 . BASE_PATH . '/application/models'         . ':'
-                 . BASE_PATH . '/application/table-gateways' );
+                 . BASE_PATH . '/lib:'
+                 . APP_PATH  . '/controllers:'
+                 . APP_PATH  . '/domain:'
+                 . APP_PATH  . '/entities:'
+                 . APP_PATH  . '/gateways:'
+                 . APP_PATH  . '/models' );
 
 // Load the main application configuration.
 require_once(BASE_PATH . '/lib/KissMVC/Application.php');
-Application::loadConfiguration(CONFIG_PATH . '/main.php');
+Application::loadConfiguration(APP_PATH . '/config/main.php');
 
 // Initialize the class autoloader.
 require_once(BASE_PATH . '/vendor/autoload.php');
