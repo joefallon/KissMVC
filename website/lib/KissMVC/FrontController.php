@@ -102,7 +102,22 @@ class FrontController
     private function urlSegments($request)
     {
         $requestParams = explode('/', $request);
+        $params = array();
 
-        return $requestParams;
+        foreach($requestParams as $param)
+        {
+            $arr = explode("?", $param, 2);
+
+            if(count($arr) == 2 && !empty($arr[0]))
+            {
+                $params[] = $arr[0];
+            }
+            else
+            {
+                $params[] = $param;
+            }
+        }
+
+        return $params;
     }
 }
