@@ -1,4 +1,5 @@
 <?php
+namespace Application\Controllers;
 use KissMVC\Controller;
 
 class IndexController extends Controller

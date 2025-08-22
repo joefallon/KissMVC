@@ -63,7 +63,7 @@ architectural pattern is used as well. Here is an overview of the architecture:
 
 When a user visits a page in our application (e.g. /view-posts) there are
 several steps needed to create the page and deliver it to the user. First, unless
-the request is for a static file (e.g. *.css, *.jpg, *.js) the index.php file within
+the request is for a static file (e.g. css, jpg, js) the index.php file within
 the public folder is executed.
 
 The index file is responsible for instantiating the classes that start the application.
@@ -447,7 +447,7 @@ server {
     root /var/www/KissMVC/website/public;
     index index.php index.html index.htm;
 
-    server_name kissmvc.lemp16.joefallon.net;
+    server_name kissmvc.dev.joefallon.net;
     autoindex off;
 
     access_log /var/log/nginx/development-access.log;
@@ -465,7 +465,6 @@ server {
     }
 
     location ~ \.php$ {
-        try_files $uri =404;
         fastcgi_pass 127.0.0.1:9000;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;

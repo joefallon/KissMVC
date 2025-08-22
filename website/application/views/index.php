@@ -1,4 +1,4 @@
-<?php /* @var $this IndexController */ ?>
+<?php /* @var $this \Application\Controllers\IndexController */ ?>
 <pre>
 
 Main View:

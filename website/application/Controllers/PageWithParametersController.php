@@ -1,4 +1,5 @@
 <?php
+namespace Application\Controllers;
 use KissMVC\Controller;
 
 class PageWithParametersController extends Controller

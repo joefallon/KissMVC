@@ -1,4 +1,5 @@
 <?php
+namespace Application\Controllers;
 use KissMVC\ControllerFactoryInterface;
 
 class PageWithParametersControllerFactory implements ControllerFactoryInterface

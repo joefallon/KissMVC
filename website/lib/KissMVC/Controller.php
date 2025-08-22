@@ -1,8 +1,6 @@
 <?php
 namespace KissMVC;
 
-require_once(BASE_PATH . '/lib/KissMVC/Application.php');
-
 abstract class Controller
 {
     /** @var string */
