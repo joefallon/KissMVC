@@ -121,7 +121,7 @@ YourAppName/
 │
 ├── application/             # Application code (not web-accessible)
 │   ├── Bootstrapper.php     # App initialization (DB, services, etc.)
-│   ├── config/
+│   ├── Config/
 │   │   ├── main.php         # Main configuration (DB, paths, timezone)
 │   │   └── routes.php       # Route definitions (URL → Controller map)
 │   ├── Controllers/         # Page controllers (one per page)
@@ -129,19 +129,19 @@ YourAppName/
 │   │   ├── IndexControllerFactory.php
 │   │   ├── PageWithParametersController.php
 │   │   └── PageWithParametersControllerFactory.php
-│   ├── domain/              # Business logic classes (shared across models)
-│   ├── entities/            # Data objects representing DB rows
-│   ├── gateways/            # Table gateways (CRUD for DB tables)
-│   ├── layouts/             # Page layout templates (e.g. default.php)
-│   ├── models/              # Page-specific models (orchestrate domain logic)
-│   ├── partials/            # Reusable view snippets (e.g. header, footer)
-│   └── views/               # Page-specific view templates
+│   ├── Domain/              # Business logic classes (shared across models)
+│   ├── Entities/            # Data objects representing DB rows
+│   ├── Gateways/            # Table gateways (CRUD for DB tables)
+│   ├── Layouts/             # Page layout templates (e.g. default.php)
+│   ├── Models/              # Page-specific models (orchestrate domain logic)
+│   ├── Partials/            # Reusable view snippets (e.g. header, footer)
+│   └── Views/               # Page-specific view templates
 │
 ├── db/
 │   └── migrations/          # Database migration scripts
 │
 ├── lib/
-│   └── KissMVC/             # Framework core (5 classes)
+│   └── KissMVC/             # Framework core (5 classes, with Bootstrapper)
 │       ├── Application.php
 │       ├── Controller.php
 │       ├── ControllerFactoryInterface.php
@@ -156,13 +156,13 @@ YourAppName/
 │
 ├── tests/                   # Unit and integration tests
 │   ├── index.php            # Test runner (optional)
-│   ├── config/              # Test configuration
-│   ├── controllers/         # Controller tests
-│   ├── domain/              # Domain class tests
-│   ├── entities/            # Entity tests
-│   ├── gateways/            # Gateway tests
-│   ├── lib/                 # Test-specific libraries
-│   └── models/              # Model tests
+│   ├── Config/              # Test configuration
+│   ├── Controllers/         # Controller tests
+│   ├── Domain/              # Domain class tests
+│   ├── Entities/            # Entity tests
+│   ├── Gateways/            # Gateway tests
+│   ├── Lib/                 # Test-specific libraries
+│   └── Models/              # Model tests
 │
 ├── vendor/                  # Composer dependencies (gitignored)
 ├── composer.json            # Composer dependencies
@@ -213,17 +213,17 @@ KissMVC uses the **Front Controller** pattern combined with **MVC**
    └────────┬────────┘  - Get Controller instance (or null → 404)
             │
             ▼
-   ┌─────────────────┐
-   │  routes.php     │  Returns a Controller based on route name.
-   │  function       │  Example: 'default' → IndexControllerFactory::create()
-   │  routeToCtrl()  │
-   └────────┬────────┘
+   ┌───────────────────────┐
+   │  routes.php           │  Returns a Controller based on route name.
+   │  function             │  Example: 'default' → IndexControllerFactory::create()
+   │  routeToController()  │
+   └────────┬──────────────┘
             │
             ▼
-   ┌─────────────────┐
-   │ ControllerFctry │  Factory instantiates the controller with
-   │ ::create()      │  dependencies (models, services, etc.).
-   └────────┬────────┘
+   ┌───────────────────┐
+   │ ControllerFactory │  Factory instantiates the controller with
+   │ ::create()        │  dependencies (models, services, etc.).
+   └────────┬──────────┘
             │
             ▼
    ┌─────────────────┐
@@ -232,18 +232,17 @@ KissMVC uses the **Front Controller** pattern combined with **MVC**
    └────────┬────────┘  - renderLayout()
             │
             ▼
-   ┌─────────────────┐
-   │   Layout        │  - Includes header, footer, wrapper HTML
-   │   (e.g.         │  - Calls $this->renderView()
-   │   default.php)  │
-   └────────┬────────┘
+   ┌──────────────────────┐
+   │   Layout             │  - Includes header, footer, wrapper HTML
+   │   (e.g. default.php) │  - Calls $this->renderView()
+   └────────┬─────────────┘
             │
             ▼
-   ┌─────────────────┐
-   │   View          │  - Page-specific HTML template
-   │   (e.g.         │  - Accesses controller public methods/helpers
-   │   index.php)    │  - May include partials
-   └────────┬────────┘
+   ┌────────────────────┐
+   │   View             │  - Page-specific HTML template
+   │   (e.g. index.php) │  - Accesses controller public methods/helpers
+   │                    │  - May include partials
+   └────────┬───────────┘
             │
             ▼
       HTML Response → User Browser
@@ -263,15 +262,15 @@ KissMVC uses the **Front Controller** pattern combined with **MVC**
 
 ### Routing
 
-Routes are defined in `application/config/routes.php`. The router maps a
+Routes are defined in `Application/Config/routes.php`. The router maps a
 single URL segment to a controller.
 
 **Example URL:**
 
 ```
 http://myapp.com/page-with-parameters/abc/123/xyz
-                 ^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^
-                 Route name             Parameters
+                 ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^
+                    Route name         Parameters
 ```
 
 - **Route name**: `page-with-parameters`
@@ -282,21 +281,28 @@ http://myapp.com/page-with-parameters/abc/123/xyz
 ```php
 function routeToController(string $route): ?Controller
 {
-    static $routes = null;
+    // Normalize the incoming route string.
+    $route =  strtolower(trim($route));
 
-    if ($routes === null) {
-        $routes = [
-            'default' => [IndexControllerFactory::class, 'create'],
-            'page-with-parameters' => [PageWithParametersControllerFactory::class, 'create'],
-        ];
+    // Simple default behaviour: empty route maps to 'default'.
+    if($route === '')
+    {
+        // The default route must always exist in the $routes map below. In other frameworks
+        // this might be called 'home' or 'index'.
+        $route = 'default';
     }
 
-    if (!isset($routes[$route])) {
-        return null; // 404
+    switch($route)
+    {
+        case 'default':
+            return IndexControllerFactory::create();
+        case 'page-with-parameters':
+            return PageWithParametersControllerFactory::create();
+//        case 'view-items':
+//            return ViewItemsControllerFactory::create();
+        default:
+            return null;
     }
-
-    $factory = $routes[$route];
-    return is_callable($factory) ? call_user_func($factory) : null;
 }
 ```
 
@@ -304,9 +310,10 @@ function routeToController(string $route): ?Controller
 
 1. Create a controller class (e.g. `AboutController`).
 2. Create a factory class (e.g. `AboutControllerFactory`).
-3. Add an entry to the `$routes` array:
+3. Add an entry to the `$routes` switch:
    ```php
-   'about' => [AboutControllerFactory::class, 'create'],
+       case 'view-items':
+         return ViewItemsControllerFactory::create();
    ```
 
 ---
@@ -504,36 +511,8 @@ Place these in their respective `application/` subdirectories.
 
 ## Configuration
 
-Configuration lives in `application/config/main.php`. It returns an array of
+Configuration lives in `Application/Config/main.php`. It returns an array of
 settings consumed by `Application::loadConfiguration()`.
-
-**Example: application/config/main.php**
-
-```php
-<?php
-declare(strict_types=1);
-
-$basePath = dirname(dirname(__DIR__));
-
-return [
-    'environment' => getenv('APPLICATION_ENV') ?: 'development',
-
-    'db' => [
-        'name' => getenv('DB_NAME') ?: 'myapp',
-        'host' => getenv('DB_HOST') ?: 'localhost',
-        'user' => getenv('DB_USER') ?: 'root',
-        'pass' => getenv('DB_PASS') ?: '',
-    ],
-
-    'secret_key' => getenv('SECRET_KEY') ?: 'change-me-in-production',
-    'ssl_required' => filter_var(getenv('SSL_REQUIRED') ?: 'false', FILTER_VALIDATE_BOOLEAN),
-    'timezone' => getenv('APP_TIMEZONE') ?: 'UTC',
-
-    'views_directory' => $basePath . '/application/views',
-    'partials_directory' => $basePath . '/application/partials',
-    'layouts_directory' => $basePath . '/application/layouts',
-];
-```
 
 **Environment variables** (set in `.env`, server config, or shell):
 
@@ -617,11 +596,17 @@ class AboutControllerFactory implements ControllerFactoryInterface
 ```php
 use Application\Controllers\AboutControllerFactory;
 
-// Inside the $routes array:
-$routes = [
-    'default' => [IndexControllerFactory::class, 'create'],
-    'about' => [AboutControllerFactory::class, 'create'], // ← Add this
-];
+    switch($route)
+    {
+        case 'default':
+            return IndexControllerFactory::create();
+        case 'page-with-parameters':
+            return PageWithParametersControllerFactory::create();
+//        case 'view-items':
+//            return ViewItemsControllerFactory::create();
+        default:
+            return null;
+    }
 ```
 
 ### 4. Create the view
@@ -684,6 +669,52 @@ server {
     }
 }
 ```
+
+Alternative Nginx Config Example:
+
+```nginx
+server {
+    #listen   80; ## listen for ipv4; this line is default and implied
+    #listen   [::]:80 default ipv6only=on; ## listen for ipv6
+
+    root /var/www/kissmvc/website/public;
+    index index.php index.html index.htm;
+
+    # Make site accessible from http://localhost/
+    server_name kissmvc.dev.joefallon.net;
+    autoindex off;
+
+    access_log /var/log/nginx/development-access.log;
+    error_log  /var/log/nginx/development-error.log;
+
+    location ~ /\. { access_log off; log_not_found off; deny all; }
+    location ~ ~$  { access_log off; log_not_found off; deny all; }
+
+    location = /favicon.ico {
+        try_files $uri =204;
+    }
+
+    # Deny access to hidden files
+    location ~ /\. { deny all; }
+
+    # Serve static files directly
+    location / {
+        try_files $uri /index.php?$args;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        
+        # Optional: set environment variables
+        fastcgi_param APPLICATION_ENV development;
+    }
+}
+```
+
 
 **Enable the site:**
 
@@ -783,12 +814,12 @@ Tests live in the `tests/` directory. Structure mirrors `application/`:
 
 ```
 tests/
-├── controllers/   # Controller tests
-├── domain/        # Domain class tests
-├── entities/      # Entity tests
-├── gateways/      # Gateway tests
-├── models/        # Model tests
-└── config/        # Test configuration
+├── Controllers/   # Controller tests
+├── Domain/        # Domain class tests
+├── Entities/      # Entity tests
+├── Gateways/      # Gateway tests
+├── Models/        # Model tests
+└── Config/        # Test configuration
 ```
 
 **Example test (PHPUnit):**
@@ -831,7 +862,7 @@ Contributions are welcome! Please follow these guidelines:
 KissMVC is released under the **MIT License**. See `LICENSE` file for details.
 
 ```
-Copyright (c) 2025 Joseph Fallon
+Copyright (c) 2015-2025 Joseph Fallon
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -856,8 +887,8 @@ THE SOFTWARE.
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/KissMVC/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/KissMVC/discussions)
+- **Issues**: [GitHub Issues](https://github.com/joefallon/KissMVC/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/joefallon/KissMVC/discussions)
 - **Documentation**: This README and inline code documentation
 
 ---

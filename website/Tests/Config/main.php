@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /**
- * Copyright (c) 2025 Joseph Fallon <joseph.t.fallon@gmail.com>
+ * Copyright (c) 2015-2025 Joseph Fallon <joseph.t.fallon@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -163,11 +163,11 @@ if (!defined('BASE_PATH')) {
 }
 
 if (!defined('APP_PATH')) {
-    define('APP_PATH', BASE_PATH . '/application');
+    define('APP_PATH', BASE_PATH . '/Application');
 }
 
 if (!defined('TESTS_PATH')) {
-    define('TESTS_PATH', BASE_PATH . '/tests');
+    define('TESTS_PATH', BASE_PATH . '/Tests');
 }
 
 // Helper to get environment values with sensible fallbacks.

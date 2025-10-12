@@ -1,6 +1,7 @@
 <?php
+declare(strict_types=1);
 /** Global Configuration */
-require_once('config/main.php');
+require_once('Config/main.php');
 
 /** @see KissUnitTest */
 //require_once('KissTest/KissUnitTest.php');

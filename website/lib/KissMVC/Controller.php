@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /**
- * Copyright (c) 2025 Joseph Fallon <joseph.t.fallon@gmail.com>
+ * Copyright (c) 2015-2025 Joseph Fallon <joseph.t.fallon@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -97,7 +97,7 @@ abstract class Controller
      * Render a partial template located in the configured partials directory.
      *
      * @param string $fileName Relative file name (e.g. 'header.php').
-     * @param array $data Optional associative array of variables to expose to
+     * @param array  $data Optional associative array of variables to expose to
      *                    the partial. The partial may extract these manually.
      */
     public function renderPartial(string $fileName, array $data = []): void
@@ -132,6 +132,7 @@ abstract class Controller
     public function getVersion(): ?string
     {
         $version = Application::getRegistryItem('version');
+
         return is_string($version) ? $version : null;
     }
 

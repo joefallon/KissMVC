@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 /**
  * Copyright (c) 2015-2025 Joseph Fallon <joseph.t.fallon@gmail.com>
  *
@@ -22,42 +23,17 @@ declare(strict_types=1);
  * THE SOFTWARE.
  */
 
-namespace KissMVC;
+namespace Application;
 
 /**
- * ControllerFactoryInterface
- *
- * Purpose
- * -------
- * A small factory interface that guarantees a Controller instance can be
- * created by the routing layer. Factories implementing this interface are
- * responsible only for constructing and returning a Controller instance.
- *
- * Design notes (Clean Code / KISS):
- * - Keep factory methods small and side-effect free.
- * - Avoid sending headers, printing output, or performing long-running work
- *   during creation. Those actions belong to the controller's execution.
- * - The returned Controller should be ready to execute immediately.
- *
- * Usage example
- * -------------
- * class IndexControllerFactory implements ControllerFactoryInterface
- * {
- *     public static function create(): Controller
- *     {
- *         return new IndexController();
- *     }
- * }
+ * Place all application initialization here (e.g. database connection code). Any
+ * objects or data that is created here can be stored in the registry for easy access
+ * anywhere within the application.
  */
-interface ControllerFactoryInterface
+class Bootstrapper
 {
-    /**
-     * Create and return a Controller instance.
-     *
-     * Implementations must return an object that implements Controller. The
-     * method should not echo, send headers, or perform heavy initialization.
-     *
-     * @return Controller
-     */
-    public static function create(): Controller;
+    public static function bootstrap()
+    {
+        
+    }
 }

@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 use KissMVC\Application;
 use Application\Bootstrapper;
 
@@ -6,19 +8,20 @@ use Application\Bootstrapper;
 if(getenv('APPLICATION_ENV') == null)
 {
     define('APPLICATION_ENV', 'production');
-    ini_set('display_errors', 0);
+    ini_set('display_errors', '0');
 }
 else
 {
     define('APPLICATION_ENV', getenv('APPLICATION_ENV'));
-    ini_set('display_errors', 1);
+    ini_set('display_errors', '1');
 }
 
 define('BASE_PATH', realpath(__DIR__   . '/../'));
-define('APP_PATH',  BASE_PATH . '/application');
+const APP_PATH = BASE_PATH . '/Application';
 
+/** @noinspection PhpIncludeInspection */
 require_once(BASE_PATH . '/vendor/autoload.php');
 
-Application::loadConfiguration(APP_PATH . '/config/main.php');
+Application::loadConfiguration(APP_PATH . '/Config/main.php');
 Bootstrapper::bootstrap();
 Application::run();

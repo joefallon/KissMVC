@@ -1,4 +1,11 @@
-<?php /* @var $this \Application\Controllers\IndexController */ ?>
+<?php
+declare(strict_types=1);
+
+use Application\Controllers\IndexController;
+
+/* @var $this IndexController */
+
+?>
 <pre>
 
 Main View:
@@ -17,4 +24,4 @@ Main View:
 
 
 
-<?php $this->renderPartial('test.php', array('data' => 'View Partial Data')); ?>
+<?php $this->renderPartial('test.php', ['data' => 'View Partial Data']); ?>

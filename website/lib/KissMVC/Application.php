@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /**
- * Copyright (c) 2025 Joseph Fallon <joseph.t.fallon@gmail.com>
+ * Copyright (c) 2015-2025 Joseph Fallon <joseph.t.fallon@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,7 @@ class Application
      * earlier keys.
      *
      * @param string $configFilePath Absolute or relative path to a PHP file.
+     *
      * @throws RuntimeException if the file does not provide an array config.
      */
     public static function loadConfiguration(string $configFilePath): void
@@ -67,18 +68,26 @@ class Application
         // The included file may return an array or set $config.
         $returned = require $configFilePath;
 
-        if (is_array($returned)) {
+        if(is_array($returned))
+        {
             $newConfig = $returned;
-        } elseif (isset($config) && is_array($config)) {
+        }
+        elseif(isset($config) && is_array($config))
+        {
             $newConfig = $config;
-        } else {
+        }
+        else
+        {
             $msg = 'Configuration file "%s" must return an array or assign $config';
             throw new RuntimeException(sprintf($msg, $configFilePath));
         }
 
-        if (self::$config !== null) {
+        if(self::$config !== null)
+        {
             self::$config = array_merge(self::$config, $newConfig);
-        } else {
+        }
+        else
+        {
             self::$config = $newConfig;
         }
 
@@ -90,6 +99,7 @@ class Application
      * Get a value from the registry. Returns null when the key is missing.
      *
      * @param string $registryItemName
+     *
      * @return mixed|null
      */
     public static function getRegistryItem(string $registryItemName)
@@ -101,11 +111,12 @@ class Application
      * Store a value in the registry under the given name.
      *
      * @param string $registryItemName
-     * @param mixed $registryItem
+     * @param mixed  $registryItem
      */
     public static function setRegistryItem(string $registryItemName, $registryItem): void
     {
-        if (self::$config === null) {
+        if(self::$config === null)
+        {
             self::$config = [];
         }
 
@@ -125,7 +136,8 @@ class Application
         self::setTimeZone();
 
         // Sanity check: ensure FrontController is available via autoload.
-        if (!class_exists(FrontController::class)) {
+        if(!class_exists(FrontController::class))
+        {
             throw new RuntimeException(
                 'FrontController not found. Ensure vendor/autoload.php is required by '
                 . 'your bootstrap (run "composer install" and require autoload.php).'
@@ -151,22 +163,24 @@ class Application
     {
         $config = self::$config ?? [];
 
-        if (empty($config['ssl_required'])) {
+        if(empty($config['ssl_required']))
+        {
             return; // SSL not required.
         }
 
         // Determine if the current request looks secure.
         $isHttpsServerVar = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
-            && $_SERVER['HTTPS'] !== '0';
+                            && $_SERVER['HTTPS'] !== '0';
 
-        $isPort443 = isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443;
+        $isPort443 = isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443;
 
         $isForwardedProtoHttps = !empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
-            && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
+                                 && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
 
         $isHttps = $isHttpsServerVar || $isPort443 || $isForwardedProtoHttps;
 
-        if ($isHttps) {
+        if($isHttps)
+        {
             return; // Already HTTPS, no redirect needed.
         }
 
@@ -176,7 +190,8 @@ class Application
 
         $url = 'https://' . $host . $uri;
 
-        if (headers_sent()) {
+        if(headers_sent())
+        {
             $msg = 'SSL required but headers already sent; cannot redirect to %s';
             trigger_error(sprintf($msg, $url), E_USER_WARNING);
 
@@ -196,15 +211,19 @@ class Application
     {
         $timezone = self::$config['timezone'] ?? null;
 
-        if (!is_string($timezone) || $timezone === '') {
+        if(!is_string($timezone) || $timezone === '')
+        {
             return;
         }
 
         // Validate before setting; DateTimeZone will throw on invalid ids.
-        try {
+        try
+        {
             new DateTimeZone($timezone);
             date_default_timezone_set($timezone);
-        } catch (Exception $e) {
+        }
+        catch(Exception $e)
+        {
             trigger_error('Invalid timezone configured: ' . $timezone, E_USER_NOTICE);
         }
     }
