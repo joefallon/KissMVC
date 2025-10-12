@@ -1,209 +1,224 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * Copyright (c) 2025 Joseph Fallon <joseph.t.fallon@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 namespace KissMVC;
 
+/**
+ * Abstract base controller used by page controllers.
+ *
+ * Responsibilities (KISS):
+ *  - Manage view/layout file paths.
+ *  - Provide collections for CSS and JS assets.
+ *  - Hold request parameters and page title.
+ *  - Render views, layouts and partials.
+ *
+ * Design goals:
+ *  - Small, well-named methods (Clean Code).
+ *  - Explicit types (PHP 7.4 typed properties and signatures).
+ *  - Minimal surprises: methods do what their names imply.
+ */
 abstract class Controller
 {
-    /** @var string */
-    private $_layoutPath;
-    /** @var string */
-    private $_viewPath;
-    /** @var string[] */
-    private $_cssFiles;
-    /** @var string[] */
-    private $_jsFiles;
-    /** @var string */
-    private $_pageTitle;
-    /** @var array */
-    private $_requestParameters;
+    /** Fully-qualified path to layout file. */
+    private string $layoutPath = '';
 
+    /** Fully-qualified path to view file. */
+    private string $viewPath = '';
+
+    /** CSS asset file names (relative to public or configured dir). */
+    private array $cssFiles = [];
+
+    /** JavaScript asset file names (relative to public or configured dir). */
+    private array $jsFiles = [];
+
+    /** Page title for the rendered page. */
+    private ?string $pageTitle = null;
+
+    /** Request parameters parsed from the URL (ordered list). */
+    private array $requestParameters = [];
+
+    /**
+     * Constructor - initializes collections. Keep lightweight.
+     */
     public function __construct()
     {
-        $this->_cssFiles = array();
-        $this->_jsFiles  = array();
+        // Properties already have sensible typed defaults; constructor is
+        // intentionally minimal to avoid hidden side effects.
     }
 
     /**
-     * This function performs any page specific processing associated with
-     * the page. It is called immediately after the class constructor is
-     * called. If a page performs no processing, then this function may be
-     * empty and not overridden.
+     * Perform page specific processing. Override in child controllers.
+     * Called immediately after controller instantiation.
      */
-    public function execute() { }
-
-    /**
-     * This function renders the selected layout.
-     */
-    public function renderLayout()
+    public function execute(): void
     {
-        /** @noinspection PhpIncludeInspection */
-        require($this->_layoutPath);
+        // Default: no-op. Child controllers may and probably should override.
     }
 
     /**
-     * This function renders the selected view.
+     * Render the selected layout file. This will "require" the file so it
+     * executes in the current scope (allowing templates to access controller
+     * members if needed).
      */
-    public function renderView()
+    public function renderLayout(): void
     {
-        /** @noinspection PhpIncludeInspection */
-        require($this->_viewPath);
+        require $this->layoutPath;
     }
 
     /**
-     * This function renders the specified partial view.
+     * Render the selected view file.
+     */
+    public function renderView(): void
+    {
+        require $this->viewPath;
+    }
+
+    /**
+     * Render a partial template located in the configured partials directory.
      *
-     * @param string $fileName
-     * @param array  $data
+     * @param string $fileName Relative file name (e.g. 'header.php').
+     * @param array $data Optional associative array of variables to expose to
+     *                    the partial. The partial may extract these manually.
      */
-    public function renderPartial($fileName, $data = array())
+    public function renderPartial(string $fileName, array $data = []): void
     {
         $dir = Application::getRegistryItem('partials_directory');
-        /** @noinspection PhpIncludeInspection */
-        require("$dir/$fileName");
+        $partialsDir = is_string($dir) ? $dir : '';
+
+        $filePath = $partialsDir . DIRECTORY_SEPARATOR . $fileName;
+
+        require $filePath;
     }
 
     /**
-     * This function returns an array containing the names of all of
-     * the CSS files. Iterate through the array of CSS files in the
-     * layout so they may all be included on the page.
-     *
-     * @return array
+     * Return configured CSS files. The layout uses this to include CSS.
      */
-    public function getCssFiles()
+    public function getCssFiles(): array
     {
-        return $this->_cssFiles;
+        return $this->cssFiles;
     }
 
     /**
-     * This function returns an array containing the names of all of
-     * the JavaScript files. Iterate through the array of JavaScript files
-     * in the layout so they may all be included on the page.
-     *
-     * @return array
+     * Return configured JavaScript files. The layout uses this to include JS.
      */
-    public function getJavaScriptFiles()
+    public function getJavaScriptFiles(): array
     {
-        return $this->_jsFiles;
+        return $this->jsFiles;
     }
 
     /**
-     * This function returns the application version. It is most useful
-     * to ensure the latest version of static files are downloaded.
-     *
-     * @return string
+     * Return application version from the registry. May be null when missing.
      */
-    public function getVersion()
+    public function getVersion(): ?string
     {
-        return Application::getRegistryItem('version');
+        $version = Application::getRegistryItem('version');
+        return is_string($version) ? $version : null;
     }
 
     /**
-     * This function returns the page title.
-     *
-     * @return string
+     * Return the page title, or null when not set.
      */
-    public function getPageTitle()
+    public function getPageTitle(): ?string
     {
-        return $this->_pageTitle;
+        return $this->pageTitle;
     }
 
     /**
-     * This function returns the request parameters of the request. They
-     * occur in an array in the same order in which they appeared in the
-     * request URL.
-     *
-     * Example: http://www.mysite.com/page-with-parameters/abc/123/xyz
-     *
-     * Array
-     * (
-     *   [0] => abc
-     *   [1] => 123
-     *   [2] => xyz
-     * )
-     *
-     * @return array
+     * Return request parameters as an ordered array of strings.
+     * Example: ['/page', 'abc', '123'] -> ['abc','123']
      */
-    public function getRequestParameters()
+    public function getRequestParameters(): array
     {
-        return $this->_requestParameters;
+        return $this->requestParameters;
     }
 
     /**
-     * This function sets the request parameters. The request parameters
-     * consists of an array of strings. The first parameter after the
-     * controller name segment has an index of 0. The second has an index
-     * of 1, etc.
+     * Set request parameters parsed from the routing layer.
      *
-     * Example: http://www.mysite.com/page-with-parameters/abc/123/xyz
-     *
-     * Array
-     * (
-     *   [0] => abc
-     *   [1] => 123
-     *   [2] => xyz
-     * )
-     *
-     * @param array $requestParameters
+     * @param array $requestParameters Ordered array of strings.
      */
-    public function setRequestParameters($requestParameters)
+    public function setRequestParameters(array $requestParameters): void
     {
-        $this->_requestParameters = $requestParameters;
+        $this->requestParameters = $requestParameters;
     }
 
     /*************************************************************************
-     * Protected Functions
+     * Protected helpers: small methods used by concrete controllers.
      *************************************************************************/
 
     /**
-     * This function sets the layout filename.
+     * Set the layout file by name. Resolves the configured layout directory.
      *
-     * @param string $layoutFileName
+     * @param string $layoutFileName File name relative to layouts directory.
      */
-    protected function setLayout($layoutFileName)
+    protected function setLayout(string $layoutFileName): void
     {
         $dir = Application::getRegistryItem('layouts_directory');
-        $this->_layoutPath = "$dir/$layoutFileName";
+        $layoutsDir = is_string($dir) ? $dir : '';
+
+        $this->layoutPath = $layoutsDir . DIRECTORY_SEPARATOR . $layoutFileName;
     }
 
     /**
-     * This function sets the view filename.
+     * Set the view file by name. Resolves the configured views directory.
      *
-     * @param string $viewFileName
+     * @param string $viewFileName File name relative to views directory.
      */
-    protected function setView($viewFileName)
+    protected function setView(string $viewFileName): void
     {
         $dir = Application::getRegistryItem('views_directory');
-        $this->_viewPath = "$dir/$viewFileName";
+        $viewsDir = is_string($dir) ? $dir : '';
+
+        $this->viewPath = $viewsDir . DIRECTORY_SEPARATOR . $viewFileName;
     }
 
     /**
-     * This function adds the specified CSS file to the CSS file collection.
+     * Add a CSS file name to the collection.
      *
-     * @param string $cssFile
+     * @param string $cssFile File name or path fragment for the CSS file.
      */
-    protected function addCssFile($cssFile)
+    protected function addCssFile(string $cssFile): void
     {
-        $this->_cssFiles[] = $cssFile;
+        $this->cssFiles[] = $cssFile;
     }
 
     /**
-     * This function adds the specified JavaScript file to the JavaScript file
-     * collection.
+     * Add a JavaScript file name to the collection.
      *
-     * @param string $jsFile
+     * @param string $jsFile File name or path fragment for the JS file.
      */
-    protected function addJavaScriptFile($jsFile)
+    protected function addJavaScriptFile(string $jsFile): void
     {
-        $this->_jsFiles[] = $jsFile;
+        $this->jsFiles[] = $jsFile;
     }
 
     /**
-     * This function sets the page title to the specified value.
+     * Set the page title.
      *
      * @param string $pageTitle
      */
-    protected function setPageTitle($pageTitle)
+    protected function setPageTitle(string $pageTitle): void
     {
-        $pageTitle = strval($pageTitle);
-        $this->_pageTitle = $pageTitle;
+        $this->pageTitle = $pageTitle;
     }
 }

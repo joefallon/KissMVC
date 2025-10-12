@@ -1,475 +1,865 @@
 KissMVC
 =======
 
-By [Joe Fallon](http://blog.joefallon.net/)
+**A Keep-It-Simple-Stupid PHP MVC Framework**
 
-KissMVC is a [Keep-It-Simple-Stupid](http://en.wikipedia.org/wiki/KISS_principle) 
-and fast bare-bones MVC framework.
+By [Joe Fallon](https://www.joefallon.net/)
 
-> "Make everything as simple as possible, but not simpler." -- Albert Einstein
+KissMVC is a lightweight, fast, bare-bones MVC framework for PHP 7.4+ that
+follows the KISS principle. Use it as a skeleton to build modern web
+applications with minimal overhead and maximum clarity.
 
-> "Simplicity is the ultimate sophistication." -- Leonardo da Vinci
+> "Make everything as simple as possible, but not simpler."  
+> — Albert Einstein
 
-> "Perfection (in design) is achieved not when there is nothing more to add, but rather when there is nothing more to take away." -- Antoine de Saint-Exupery
+> "Simplicity is prerequisite for reliability."  
+> — Edsger W. Dijkstra
 
-> "Simplicity is the soul of efficiency." -- Austin Freeman
+> "Fools ignore complexity; pragmatists suffer it; experts avoid it; geniuses
+> remove it."  
+> — Alan Perlis
 
-> "Simplicity is prerequisite for reliability." --Edsger W.Dijkstra
+---
 
-> "Fools ignore complexity; pragmatists suffer it; experts avoid it; geniuses remove it." -- Alan Perlis
+## Table of Contents
 
-KissMVC includes the following features:
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Architecture Overview](#architecture-overview)
+- [Core Concepts](#core-concepts)
+  - [Routing](#routing)
+  - [Controllers](#controllers)
+  - [Controller Factories](#controller-factories)
+  - [Views and Layouts](#views-and-layouts)
+  - [Models and Domain Logic](#models-and-domain-logic)
+- [Configuration](#configuration)
+- [Adding a New Page](#adding-a-new-page)
+- [Server Configuration](#server-configuration)
+  - [Nginx](#nginx)
+  - [Apache](#apache)
+- [Development Workflow](#development-workflow)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
 
-*   A standard folder structure for your application.
-*   A minimum amount of overhead is imposed by the framework. It is assumed additional 
-    functionality can either be created be created by the developer or included via 
-    Composer.
-*   Routing is kept extremely simple and quick.
-*   All publicly accessible assets are located in a single "public" directory for
-    maximum safety.
-*   KissMVC is extremely simple to fully understand and get up to speed
-    with. No more than 20-25 minutes should be required to fully understand
-    KissMVC and all of its' code.
-*   KissMVC promotes good software engineering and web application development
-    practices by promoting the use of database migrations, table gateways,
-    models, Controllers, domain specific classes, layouts, views, view partials,
-    and all of the other goodies you may like.
-*   The amount of framework code is kept to a minimum. We assume you have your
-    favorite ORM or logging library and plan to use that.
+---
 
-Installation
-------------
+## Features
 
-Since KissMVC is both a small library and a folder structure for organizing
-your project it is not packaged as a [Composer](https://getcomposer.org/)
-library. Therefore, to install it go ahead and click the "Download Zip" button on the
-right side of the page.
+- **Minimal overhead**: Five core classes, zero bloat.
+- **Standard folder structure**: Organized by responsibility (MVC pattern).
+- **Simple routing**: One URL segment maps to one controller. Easy to trace.
+- **Secure by default**: All public assets live in a single `public/`
+  directory; application code is not web-accessible.
+- **Fast learning curve**: 20-25 minutes to understand the entire framework.
+- **Best practices**: Promotes migrations, gateways, models, controllers,
+  layouts, views, and partials.
+- **Composer-friendly**: Bring your own ORM, logger, or libraries.
+- **PHP 7.4+ ready**: Strict types, typed properties, and modern syntax.
 
-Once it is unzipped, copy the contents of the "website" folder to your Git
-(or any VCS) repo and commit it. Don't worry about checking in a large amount
-of library code because KissMVC is fully implemented using only five classes.
+---
 
+## Requirements
 
-Framework Architecture
-----------------------
+- **PHP 7.4 or higher** (8.0+ recommended)
+- **Composer** for dependency management
+- **Web server**: Nginx, Apache, or PHP's built-in server
+- **Optional**: Database (MySQL, PostgreSQL, SQLite, etc.)
 
-KissMVC uses a variation of the
-[Front Controller](http://www.oracle.com/technetwork/java/frontcontroller-135648.html)
-design pattern. The
-[Model-View-Controller](http://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93Controller)
-architectural pattern is used as well. Here is an overview of the architecture:
+---
 
-![KissMVC Architecture Overview](http://i.imgur.com/yQQARZN.png)
+## Quick Start
 
-When a user visits a page in our application (e.g. /view-posts) there are
-several steps needed to create the page and deliver it to the user. First, unless
-the request is for a static file (e.g. css, jpg, js) the index.php file within
-the public folder is executed.
+```bash
+# 1. Clone or download the repository
+git clone https://github.com/yourusername/KissMVC.git myapp
+cd myapp/website
 
-The index file is responsible for instantiating the classes that start the application.
-Once the classes are instantiated, the `run()` method of the `Application` class is
-called. This method verifies that the site is using SSL if it is configured to,
-sets the default timezone, and then instantiates the `FrontController` class to route 
-the request.
+# 2. Install dependencies
+composer install
 
-The `FrontController` class splits apart the URL to determine which Controller to
-instantiate. Unlike other frameworks, this one uses one Controller per page. Here
-is an example of a URL:
+# 3. Configure your application
+cp application/config/main.php application/config/main.local.php
+# Edit main.local.php with your database credentials and settings
 
-```
-http://myapplication/page-with-parameters/abc/123/xyz
-```
+# 4. Start the built-in PHP server (for local development)
+php -S localhost:8000 -t public
 
-There are several parts to this URL. Several of them are important to the front
-Controller. First, `page-with-parameters` specifies the Controller to instantiate
-to handle this request. Second, `abc`, `123`, and `xyz` are URL parameters that
-get passed to the controller and are available for immediate use. From this
-example the Controller `PageWithParametersController` would be instantiated.
-
-All Controllers derive from the base class `Controller`. The base class Controller
-provides several useful functions that are useful for most pages
-(e.g. `getPageTitle()`). Typically, the model for the Controller will be passed
-into the Controller constructor (i.e. this is dependency injection) as a parameter.
-
-After the Controller for that particular page is constructed, two methods are called
-in succession. First, `execute()` is called. This is a function is where all logic
-needed to determine what to do with the request should be placed. For example,
-let's assume a form was posted. The contents of the submit button post variable
-would be checked to determine if it is a submission or fresh display of the form.
-After the `execute()` function has completed execution, the `renderLayout()` method
-is called. The `renderLayout()` method loads the layout.
-
-Once the layout is loaded, the layout will call `renderView()` on the Controller to 
-load the view that is specific to that page. It is assumed that each page has a single
-view. However, each view can include as many "view partials" as needed for maximum
-view code reusability.
-
-Views should have a one-to-one correspondence with the Controllers. Models should also
-have a one-to-one correspondence with the Controllers. There are four type of classes
-that models interact with besides Controllers. 
-
-The first type are the domain objects. Domain objects are classes containing business 
-logic that is shared among many models and other domain objects. The second are 
-the entities. Entities are objects that represent a row of a table in a database 
-(e.g. post). The third are the table gateways that store and fetch entities from 
-the database. The last, and not depicted, are any objects from third party vendor 
-code (e.g. monolog).
-
-Table gateways, entities, models, and domain objects are not included in this
-framework. Instead it is left to the application programmer to decide on the
-best way to implement the persistence layer. Many people recommend 
-[Doctrine 2](http://www.doctrine-project.org/projects/orm.html).
-
-Here is an example of the relationship among several example classes in an application:
-
-![KissMVC - Several Stacks](http://i.imgur.com/QXA1vYq.png)
-
-Directory Structure
--------------------
-
-Here is the directory structure of a KissMVC application:
-
-```
-WebsiteName
-  |
-  +--> application
-  |     |
-  |     +--> config
-  |     |       |
-  |     |       +--> main.php
-  |     |       |
-  |     |       +--> routes.php    
-  |     |
-  |     +--> domain
-  |     |
-  |     +--> entities
-  |     |
-  |     +--> layouts
-  |     |
-  |     +--> models
-  |     |
-  |     +--> controllers
-  |     |
-  |     +--> gateways
-  |     |
-  |     +--> partials
-  |     |
-  |     +--> views
-  |     |
-  |     +--> Bootstrapper.php
-  |
-  +--> db
-  |     |
-  |     +--> migrations
-  |
-  +--> lib
-  |     |
-  |     +--> KissMVC
-  |            |
-  |            +--> Application.php
-  |            |
-  |            +--> AutoLoader.php
-  |            |
-  |            +--> FrontController.php
-  |            |
-  |            +--> Controller.php
-  |            |
-  |            +--> ControllerFactoryInterface.php
-  |
-  +--> public
-  |      |
-  |      +--> css
-  |      |
-  |      +--> img
-  |      |
-  |      +--> js
-  |      |
-  |      +--> index.php
-  |      |
-  |      +--> .htaccess
-  |
-  +--> tests
-         |
-         +--> classes
-         |
-         +--> entities
-         |
-         +--> models
-         |
-         +--> controllers
-         |
-         +--> gateways
-         |
-         +--> config
-         |
-         +--> lib
-         |
-         +--> index.php
+# 5. Open your browser
+# Visit: http://localhost:8000
 ```
 
-Typically, `WebsiteName` is changed to match the name of the application (e.g. 
-MyFaceSpace).
+You should see the default "Hello, World!" page.
 
-![Folder Structure Overview](http://i.imgur.com/jBn8bxw.png)
+---
 
-*   **WebsiteName/application/domain** - Domain classes are classes that contain
-logic that is specific to the problem domain the application serves and that will be used 
-by several models. Typically, they will be used by models, other domain classes. 
-Additionally, they may call other domain classes and table gateways. They should never 
-call models or Controllers.
-*   **WebsiteName/application/entities** - Entities are classes that represent a single
-row within a database. They may represent a single row from more than one table if
-a SQL join is used. Entities may be passed all over the application. They may also include
-logic to validate themselves. Typically, they consist of simple bundles of data.
-*   **WebsiteName/application/layouts** - A layout represents an overall visual
-structure for a page. The call to `renderView()` will be contained within the layout.
-*   **WebsiteName/application/models** - Models contain page specific logic and
-processing.
-*   **WebsiteName/application/controllers** - Controllers act as the middle-man between
-the view and the model. They also define the overall page behavior (e.g. redirect
-to another page on authorization failure?). Controllers present that data from the
-model to the view and also assist with formatting (e.g. converting a number to a proper 
-currency format).
+## Installation
 
-![Controllers](http://i.imgur.com/4vSQAK5.png)
+KissMVC is both a small framework library **and** a folder structure for
+organizing your application. It is not distributed as a standalone Composer
+package; instead, you clone or download the entire skeleton.
 
-*   **WebsiteName/application/gateways** - Table gateways provide an interface
-to the persistence layer. Typically, 
-[CRUD](http://en.wikipedia.org/wiki/Create,_read,_update_and_delete) 
-(i.e. create, retrieve, update, delete) methods are placed in these classes. All 
-database interaction must go through the table gateways.
-*   **WebsiteName/application/partials** - View partials are reusable chunks
-of HTML can can be reused in multiple locations on single web page or across many
-web pages.
-*   **WebsiteName/application/views** - The view contains the HTML for a single page.
-The view does not contain the layout (e.g. body tag or container). It typically
-has a one-to-one correspondence with the Controllers (i.e. one view per controller class).
-*   **WebsiteName/application/Bootstrapper.php** - The `Bootstrapper` class
-contains a single method called `bootstrap()` where all of the application specific 
-initialization is placed. For example, database connection creation code can be placed 
-here. Typically, all of the initialized objects within the Bootstrapper class are stored 
-in the registry for easy access anywhere in the application. 
+### Step-by-step installation:
 
-![Controllers](http://i.imgur.com/cmXjQAo.png)
+1. **Download or clone** this repository.
+2. **Copy the `website/` folder** into your project repository.
+3. **Rename `website/`** to match your application name (optional).
+4. **Run `composer install`** inside the folder to install dependencies.
+5. **Configure your web server** to point the document root to `public/`.
+6. **Edit configuration files** in `application/config/` to match your
+   environment.
 
-*   **WebsiteName/application/config/main.php** - Main application config. Database 
-credentials are kept in this file along with any application specific application 
-configuration except for the routes.
-*   **WebsiteName/application/config/routes.php** - The routes file contains single 
-method that returns a Controller based on the first URL parameter after the domain. 
-If no URL parameter is given, then the default (index) Controller is returned.
+---
 
-![Application Configuration](http://i.imgur.com/3sUuTr1.png)
+## Project Structure
 
-*   **WebsiteName/db** - All database scripts are contained here.
-*   **WebsiteName/db/migrations** - The migrations folder contains all of your migration
-files.
+```
+YourAppName/
+│
+├── application/             # Application code (not web-accessible)
+│   ├── Bootstrapper.php     # App initialization (DB, services, etc.)
+│   ├── config/
+│   │   ├── main.php         # Main configuration (DB, paths, timezone)
+│   │   └── routes.php       # Route definitions (URL → Controller map)
+│   ├── Controllers/         # Page controllers (one per page)
+│   │   ├── IndexController.php
+│   │   ├── IndexControllerFactory.php
+│   │   ├── PageWithParametersController.php
+│   │   └── PageWithParametersControllerFactory.php
+│   ├── domain/              # Business logic classes (shared across models)
+│   ├── entities/            # Data objects representing DB rows
+│   ├── gateways/            # Table gateways (CRUD for DB tables)
+│   ├── layouts/             # Page layout templates (e.g. default.php)
+│   ├── models/              # Page-specific models (orchestrate domain logic)
+│   ├── partials/            # Reusable view snippets (e.g. header, footer)
+│   └── views/               # Page-specific view templates
+│
+├── db/
+│   └── migrations/          # Database migration scripts
+│
+├── lib/
+│   └── KissMVC/             # Framework core (5 classes)
+│       ├── Application.php
+│       ├── Controller.php
+│       ├── ControllerFactoryInterface.php
+│       └── FrontController.php
+│
+├── public/                  # Web-accessible directory (document root)
+│   ├── index.php            # Front controller entry point
+│   ├── .htaccess            # Apache rewrite rules (optional)
+│   ├── css/                 # Stylesheets
+│   ├── img/                 # Images
+│   └── js/                  # JavaScript files
+│
+├── tests/                   # Unit and integration tests
+│   ├── index.php            # Test runner (optional)
+│   ├── config/              # Test configuration
+│   ├── controllers/         # Controller tests
+│   ├── domain/              # Domain class tests
+│   ├── entities/            # Entity tests
+│   ├── gateways/            # Gateway tests
+│   ├── lib/                 # Test-specific libraries
+│   └── models/              # Model tests
+│
+├── vendor/                  # Composer dependencies (gitignored)
+├── composer.json            # Composer dependencies
+├── composer.lock            # Locked dependency versions
+└── README.md                # This file
+```
 
-![Database Scripts and Migrations](http://i.imgur.com/Qzug1Fl.png)
+---
 
-*   **WebsiteName/lib** - Lib contains the framework library and any other third-party
-libraries that do not have Composer support.
-*   **WebsiteName/public** - The public folder should be the only folder that is
-accessible to the public and should be set as the document root of the site.
-*   **WebsiteName/public/css** - CSS Files
-*   **WebsiteName/public/img** - Image Files
-*   **WebsiteName/public/js** - JavaScript Files
-*   **WebsiteName/public/index.php** - All web requests that are not for static files
-are routed through this file.
+## Architecture Overview
 
-![Document Root](http://i.imgur.com/0ArGVvY.png)
+KissMVC uses the **Front Controller** pattern combined with **MVC**
+(Model-View-Controller). Here's how a request flows through the system:
 
-*   **WebsiteName/tests** - All unit and integration tests go here.
-*   **WebsiteName/tests/domain** - Tests for domain classes.
-*   **WebsiteName/tests/entities** - Tests for entity classes.
-*   **WebsiteName/tests/models** - Tests for models.
-*   **WebsiteName/tests/controllers** - Tests for Controllers.
-*   **WebsiteName/tests/gateways** - Tests for table gateways.
-*   **WebsiteName/tests/config** - Test configuration.
-*   **WebsiteName/tests/lib** - Test specific libraries.
-*   **WebsiteName/tests/index.php** - Test runner.
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Request Flow                                │
+└─────────────────────────────────────────────────────────────────────┘
 
-![Document Root](http://i.imgur.com/JkyqXRa.png)
+    ┌───────────────┐
+    │ User Browser  │
+    └───────────────┘
+            │
+            │  HTTP Request: /page-with-parameters/abc/123
+            ▼
+   ┌─────────────────┐
+   │  Web Server     │  (Nginx/Apache)
+   │  (Document Root │   Routes all non-static requests to:
+   │   = public/)    │   public/index.php
+   └────────┬────────┘
+            │
+            ▼
+   ┌─────────────────┐
+   │  public/        │  1. Require Composer autoloader
+   │  index.php      │  2. Define constants (BASE_PATH, APP_PATH)
+   └────────┬────────┘  3. Load config: Application::loadConfiguration()
+            │           4. Run: Application::run()
+            ▼
+   ┌─────────────────┐
+   │  Application    │  - Check SSL requirement
+   │  ::run()        │  - Set timezone
+   └────────┬────────┘  - Instantiate FrontController
+            │
+            ▼
+   ┌─────────────────┐
+   │ FrontController │  - Parse URL segments
+   │ ::routeRequest()│  - Call routeToController($segment)
+   └────────┬────────┘  - Get Controller instance (or null → 404)
+            │
+            ▼
+   ┌─────────────────┐
+   │  routes.php     │  Returns a Controller based on route name.
+   │  function       │  Example: 'default' → IndexControllerFactory::create()
+   │  routeToCtrl()  │
+   └────────┬────────┘
+            │
+            ▼
+   ┌─────────────────┐
+   │ ControllerFctry │  Factory instantiates the controller with
+   │ ::create()      │  dependencies (models, services, etc.).
+   └────────┬────────┘
+            │
+            ▼
+   ┌─────────────────┐
+   │   Controller    │  - setRequestParameters([...])
+   │   (concrete)    │  - execute()  ← Page-specific logic here
+   └────────┬────────┘  - renderLayout()
+            │
+            ▼
+   ┌─────────────────┐
+   │   Layout        │  - Includes header, footer, wrapper HTML
+   │   (e.g.         │  - Calls $this->renderView()
+   │   default.php)  │
+   └────────┬────────┘
+            │
+            ▼
+   ┌─────────────────┐
+   │   View          │  - Page-specific HTML template
+   │   (e.g.         │  - Accesses controller public methods/helpers
+   │   index.php)    │  - May include partials
+   └────────┬────────┘
+            │
+            ▼
+      HTML Response → User Browser
+```
 
-Routing
--------
+### Key takeaways:
 
-Here is an example `routes.php` file:
+- **One controller per page**: Simple, predictable routing.
+- **Factory pattern**: Controllers are instantiated via factories for clean
+  dependency injection.
+- **Separation of concerns**: Models handle business logic, views handle
+  presentation, controllers coordinate.
+
+---
+
+## Core Concepts
+
+### Routing
+
+Routes are defined in `application/config/routes.php`. The router maps a
+single URL segment to a controller.
+
+**Example URL:**
+
+```
+http://myapp.com/page-with-parameters/abc/123/xyz
+                 ^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^
+                 Route name             Parameters
+```
+
+- **Route name**: `page-with-parameters`
+- **Parameters**: `['abc', '123', 'xyz']`
+
+**routes.php:**
 
 ```php
-function routeToController($route)
+function routeToController(string $route): ?Controller
 {
-    switch($route)
-    {
-        case 'default':
-            return IndexControllerFactory::create();
-        case 'page-with-parameters':
-            return PageWithParametersControllerFactory::create();
-        case 'view-items':
-            return ViewItemsControllerFactory::create();
-        default:
-            return null;
+    static $routes = null;
+
+    if ($routes === null) {
+        $routes = [
+            'default' => [IndexControllerFactory::class, 'create'],
+            'page-with-parameters' => [PageWithParametersControllerFactory::class, 'create'],
+        ];
     }
+
+    if (!isset($routes[$route])) {
+        return null; // 404
+    }
+
+    $factory = $routes[$route];
+    return is_callable($factory) ? call_user_func($factory) : null;
 }
 ```
 
-Controllers
-----------
+**To add a new route:**
 
-Here is an example default Controller with no URL parameters:
+1. Create a controller class (e.g. `AboutController`).
+2. Create a factory class (e.g. `AboutControllerFactory`).
+3. Add an entry to the `$routes` array:
+   ```php
+   'about' => [AboutControllerFactory::class, 'create'],
+   ```
+
+---
+
+### Controllers
+
+Controllers are page-specific classes that:
+
+- Configure page metadata (title, layout, view).
+- Orchestrate models and services in `execute()`.
+- Provide helper methods for views (e.g. `getMessage()`).
+
+**Example: IndexController.php**
 
 ```php
+<?php
+declare(strict_types=1);
+
+namespace Application\Controllers;
+
 use KissMVC\Controller;
 
 class IndexController extends Controller
 {
-    public function  __construct()
+    public function __construct()
     {
         parent::__construct();
 
-        $this->setPageTitle('Index');
+        $this->setPageTitle('Home');
         $this->setLayout('default.php');
-        $this->setViewFileName('index.php');
+        $this->setView('index.php');
     }
 
-    public function execute() { }
+    public function execute(): void
+    {
+        parent::execute(); // Intentional no-op; silences IDE warnings
 
-    public function getMessage()
+        // Fetch data, call models, prepare for view
+    }
+
+    public function getMessage(): string
     {
         return 'Hello, World!';
     }
 }
 ```
 
-Here is an example Controller that uses URL parameters:
+**Controller lifecycle:**
+
+1. **Instantiation** (via factory)
+2. **setRequestParameters(...)** (FrontController injects URL params)
+3. **execute()** (your business logic runs here)
+4. **renderLayout()** (layout is included; layout calls renderView())
+
+---
+
+### Controller Factories
+
+Factories provide a single place to wire up dependencies for controllers.
+They implement `ControllerFactoryInterface`.
+
+**Example: IndexControllerFactory.php**
 
 ```php
-use KissMVC\Controller;
+<?php
+declare(strict_types=1);
 
-class PageWithParametersController extends Controller
-{
-    public function  __construct()
-    {
-        parent::__construct();
+namespace Application\Controllers;
 
-        $this->setPageTitle('Page with Parameters');
-        $this->setLayout('default.php');
-        $this->setViewFileName('page-with-parameters.php');
-    }
-
-    public function execute() { }
-}
-```
-
-Controller Factories
--------------------
-
-Here is an example Controller factory:
-
-```php
 use KissMVC\ControllerFactoryInterface;
 
 class IndexControllerFactory implements ControllerFactoryInterface
 {
     public static function create()
     {
+        // Optionally inject dependencies:
+        // $model = new IndexModel($someService);
+        // return new IndexController($model);
+
         return new IndexController();
     }
-
 }
 ```
 
-Layouts
--------
+---
 
-Here is an example layout:
+### Views and Layouts
 
+**Layouts** wrap views with common HTML structure (header, footer, nav).
+
+**Example: application/layouts/default.php**
+
+```php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><?= htmlspecialchars($this->getPageTitle() ?? 'App') ?></title>
+    <?php foreach ($this->getCssFiles() as $css): ?>
+        <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>">
+    <?php endforeach; ?>
+</head>
+<body>
+    <div class="container">
+        <?php $this->renderView(); ?>
+    </div>
+
+    <?php foreach ($this->getJavaScriptFiles() as $js): ?>
+        <script src="<?= htmlspecialchars($js) ?>"></script>
+    <?php endforeach; ?>
+</body>
+</html>
 ```
-Default Layout
 
-<?php $this->renderView(); ?>
-```
+**Views** contain page-specific HTML.
 
-Views
------
+**Example: application/views/index.php**
 
-Here is an example view:
+```php
+<?php /* @var $this \Application\Controllers\IndexController */ ?>
 
-```
-<?php /* @var $this IndexController */ ?>
-<pre>
+<h1>Welcome to KissMVC</h1>
 
-Main View:
-
-<?php echo $this->getMessage(); ?>
-
-</pre>
+<p><?= htmlspecialchars($this->getMessage()) ?></p>
 
 <ul>
     <li>
-        <a href="<?= $this->getBaseUrl(); ?>/page-with-parameters/abc/123/xyz">
+        <a href="/page-with-parameters/abc/123/xyz">
             Page with Parameters
         </a>
     </li>
 </ul>
 
-
-
-<?php $this->renderPartial('test.php', array('data' => 'View Partial Data')); ?>
+<?php 
+// Include a partial
+$this->renderPartial('test.php', ['data' => 'Example Data']); 
+?>
 ```
 
-View Partials
--------------
+**Partials** are reusable snippets.
 
-Here is an example view partial:
+**Example: application/partials/test.php**
 
-```
-<pre>
-
-View Partial:
-
-<?php echo '$data[data] = ' . $data['data']; ?>
-
-</pre>
+```php
+<div class="alert">
+    <p>Partial says: <?= htmlspecialchars($data['data'] ?? '') ?></p>
+</div>
 ```
 
-Nginx Config
--------------
+---
 
-Here is an example nginx configuration. It works identically to the Zend Framework 1 way of
-handling requests.
+### Models and Domain Logic
+
+KissMVC does **not** include a model or ORM layer. You are free to use:
+
+- **Doctrine ORM**
+- **Eloquent**
+- **PDO** (raw SQL)
+- **Custom table gateways** and entities
+
+**Recommended structure:**
 
 ```
-server {
-    #listen   80; ## listen for ipv4; this line is default and implied
-    #listen   [::]:80 default ipv6only=on; ## listen for ipv6
+┌──────────────┐
+│  Controller  │  Orchestrates the page lifecycle
+└──────┬───────┘
+       │ calls
+       ▼
+┌──────────────┐
+│    Model     │  Page-specific business logic
+└──────┬───────┘
+       │ calls
+       ▼
+┌──────────────┐      ┌──────────────┐
+│   Domain     │◄─────│   Gateway    │  Interacts with DB
+│   Objects    │      │  (CRUD)      │
+└──────────────┘      └──────┬───────┘
+                             │
+                             ▼
+                        ┌──────────┐
+                        │ Entities │  Represent DB rows
+                        └──────────┘
+```
 
-    root /var/www/KissMVC/website/public;
-    index index.php index.html index.htm;
+**Example domain structure:**
 
-    server_name kissmvc.dev.joefallon.net;
-    autoindex off;
+- **Entities**: `User`, `Post`, `Comment` (data objects)
+- **Gateways**: `UserGateway`, `PostGateway` (database access)
+- **Domain**: `UserAuthenticator`, `PostValidator` (business rules)
+- **Models**: `LoginModel`, `PostListModel` (page orchestration)
 
-    access_log /var/log/nginx/development-access.log;
-    error_log  /var/log/nginx/development-error.log;
+Place these in their respective `application/` subdirectories.
 
-    location ~ /\. { access_log off; log_not_found off; deny all; }
-    location ~ ~$  { access_log off; log_not_found off; deny all; }
+---
 
-    location = /favicon.ico {
-        try_files $uri =204;
+## Configuration
+
+Configuration lives in `application/config/main.php`. It returns an array of
+settings consumed by `Application::loadConfiguration()`.
+
+**Example: application/config/main.php**
+
+```php
+<?php
+declare(strict_types=1);
+
+$basePath = dirname(dirname(__DIR__));
+
+return [
+    'environment' => getenv('APPLICATION_ENV') ?: 'development',
+
+    'db' => [
+        'name' => getenv('DB_NAME') ?: 'myapp',
+        'host' => getenv('DB_HOST') ?: 'localhost',
+        'user' => getenv('DB_USER') ?: 'root',
+        'pass' => getenv('DB_PASS') ?: '',
+    ],
+
+    'secret_key' => getenv('SECRET_KEY') ?: 'change-me-in-production',
+    'ssl_required' => filter_var(getenv('SSL_REQUIRED') ?: 'false', FILTER_VALIDATE_BOOLEAN),
+    'timezone' => getenv('APP_TIMEZONE') ?: 'UTC',
+
+    'views_directory' => $basePath . '/application/views',
+    'partials_directory' => $basePath . '/application/partials',
+    'layouts_directory' => $basePath . '/application/layouts',
+];
+```
+
+**Environment variables** (set in `.env`, server config, or shell):
+
+```bash
+export APPLICATION_ENV=production
+export DB_NAME=myapp_prod
+export DB_HOST=prod-db.example.com
+export DB_USER=app_user
+export DB_PASS=secure_password
+export SECRET_KEY=a-long-random-string
+export SSL_REQUIRED=true
+export APP_TIMEZONE=America/New_York
+```
+
+---
+
+## Adding a New Page
+
+Follow these steps to add a new page (e.g. "About Us"):
+
+### 1. Create the controller
+
+**File: `application/Controllers/AboutController.php`**
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace Application\Controllers;
+
+use KissMVC\Controller;
+
+class AboutController extends Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->setPageTitle('About Us');
+        $this->setLayout('default.php');
+        $this->setView('about.php');
     }
 
+    public function execute(): void
+    {
+        parent::execute();
+        // Add page-specific logic here
+    }
+
+    public function getTeamMembers(): array
+    {
+        return ['Alice', 'Bob', 'Charlie'];
+    }
+}
+```
+
+### 2. Create the factory
+
+**File: `application/Controllers/AboutControllerFactory.php`**
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace Application\Controllers;
+
+use KissMVC\ControllerFactoryInterface;
+
+class AboutControllerFactory implements ControllerFactoryInterface
+{
+    public static function create()
+    {
+        return new AboutController();
+    }
+}
+```
+
+### 3. Add the route
+
+**File: `application/config/routes.php`**
+
+```php
+use Application\Controllers\AboutControllerFactory;
+
+// Inside the $routes array:
+$routes = [
+    'default' => [IndexControllerFactory::class, 'create'],
+    'about' => [AboutControllerFactory::class, 'create'], // ← Add this
+];
+```
+
+### 4. Create the view
+
+**File: `application/views/about.php`**
+
+```php
+<?php /* @var $this \Application\Controllers\AboutController */ ?>
+
+<h1>About Us</h1>
+
+<h2>Team Members:</h2>
+<ul>
+    <?php foreach ($this->getTeamMembers() as $member): ?>
+        <li><?= htmlspecialchars($member) ?></li>
+    <?php endforeach; ?>
+</ul>
+```
+
+### 5. Test
+
+Visit: `http://localhost:8000/about`
+
+---
+
+## Server Configuration
+
+### Nginx
+
+**File: `/etc/nginx/sites-available/myapp`**
+
+```nginx
+server {
+    listen 80;
+    server_name myapp.local;
+
+    root /var/www/myapp/public;
+    index index.php index.html;
+
+    access_log /var/log/nginx/myapp-access.log;
+    error_log  /var/log/nginx/myapp-error.log;
+
+    # Deny access to hidden files
+    location ~ /\. { deny all; }
+
+    # Serve static files directly
     location / {
         try_files $uri /index.php?$args;
     }
 
+    # PHP-FPM handler
     location ~ \.php$ {
-        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
-        fastcgi_param APPLICATION_ENV development;
+
+        # Optional: set environment variables
+        fastcgi_param APPLICATION_ENV production;
     }
 }
 ```
+
+**Enable the site:**
+
+```bash
+sudo ln -s /etc/nginx/sites-available/myapp /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+### Apache
+
+**File: `public/.htaccess`** (included by default)
+
+```apache
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+```
+
+**VirtualHost configuration:**
+
+```apache
+<VirtualHost *:80>
+    ServerName myapp.local
+    DocumentRoot /var/www/myapp/public
+
+    <Directory /var/www/myapp/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # Optional: set environment variables
+    SetEnv APPLICATION_ENV production
+
+    ErrorLog ${APACHE_LOG_DIR}/myapp-error.log
+    CustomLog ${APACHE_LOG_DIR}/myapp-access.log combined
+</VirtualHost>
+```
+
+**Enable the site:**
+
+```bash
+sudo a2enmod rewrite
+sudo a2ensite myapp
+sudo systemctl reload apache2
+```
+
+---
+
+## Development Workflow
+
+### Local development with PHP's built-in server
+
+```bash
+cd website
+php -S localhost:8000 -t public
+```
+
+Visit: `http://localhost:8000`
+
+### Running tests
+
+```bash
+# Install dependencies
+composer install
+
+# Run PHPUnit (if configured)
+vendor/bin/phpunit --colors=always
+
+# Lint all PHP files
+for f in $(find . -name "*.php"); do php -l "$f"; done
+```
+
+### Using the CI script
+
+The repository includes `scripts/ci-run.sh` for automated linting and testing:
+
+```bash
+./scripts/ci-run.sh
+```
+
+This script:
+
+- Changes to the repository root
+- Runs `composer install`
+- Lints all PHP files
+- Runs PHPUnit tests (if present)
+
+---
+
+## Testing
+
+Tests live in the `tests/` directory. Structure mirrors `application/`:
+
+```
+tests/
+├── controllers/   # Controller tests
+├── domain/        # Domain class tests
+├── entities/      # Entity tests
+├── gateways/      # Gateway tests
+├── models/        # Model tests
+└── config/        # Test configuration
+```
+
+**Example test (PHPUnit):**
+
+```php
+<?php
+use PHPUnit\Framework\TestCase;
+use Application\Controllers\IndexController;
+
+class IndexControllerTest extends TestCase
+{
+    public function testGetMessage()
+    {
+        $controller = new IndexController();
+        $this->assertEquals('Hello, World!', $controller->getMessage());
+    }
+}
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. **Fork the repository** and create a feature branch.
+2. **Follow PSR-12** coding standards.
+3. **Add tests** for new functionality.
+4. **Document your changes** in code comments and this README if applicable.
+5. **Run linting and tests** before submitting:
+   ```bash
+   ./scripts/ci-run.sh
+   ```
+6. **Submit a pull request** with a clear description.
+
+---
+
+## License
+
+KissMVC is released under the **MIT License**. See `LICENSE` file for details.
+
+```
+Copyright (c) 2025 Joseph Fallon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+---
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/KissMVC/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/KissMVC/discussions)
+- **Documentation**: This README and inline code documentation
+
+---
+
+**Built with ❤️ and the KISS principle.**

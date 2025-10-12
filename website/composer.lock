@@ -4,55 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f2282f7d7b5922f0756a2e58a967c534",
-    "packages": [
-        {
-            "name": "joefallon/phpautoloader",
-            "version": "v2.0.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/joefallon/phpautoloader.git",
-                "reference": "2df9a6f4bbe4881515e4c4f0e833f0696ffb3543"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/joefallon/phpautoloader/zipball/2df9a6f4bbe4881515e4c4f0e833f0696ffb3543",
-                "reference": "2df9a6f4bbe4881515e4c4f0e833f0696ffb3543",
-                "shasum": ""
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "JoeFallon": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Joe Fallon",
-                    "email": "joseph.t.fallon@gmail.com",
-                    "homepage": "http://blog.joefallon.net/",
-                    "role": "Lead Developer"
-                }
-            ],
-            "description": "Joe's simple to use and versatile PHP autoloader.",
-            "homepage": "https://github.com/joefallon/phpautoloader",
-            "keywords": [
-                "Simple",
-                "autoloader",
-                "namespace",
-                "psr-0"
-            ],
-            "support": {
-                "issues": "https://github.com/joefallon/phpautoloader/issues",
-                "source": "https://github.com/joefallon/phpautoloader/tree/v2.0.5"
-            },
-            "time": "2016-07-27T17:27:06+00:00"
-        }
-    ],
+    "content-hash": "1ab012b792cc924831c93f22d8273df2",
+    "packages": [],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
@@ -60,7 +13,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=5.3.0"
+        "php": ">=7.4"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
