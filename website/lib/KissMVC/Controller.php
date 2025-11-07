@@ -82,7 +82,7 @@ abstract class Controller
      */
     public function renderLayout(): void
     {
-        require $this->layoutPath;
+        include $this->layoutPath;
     }
 
     /**
@@ -90,7 +90,7 @@ abstract class Controller
      */
     public function renderView(): void
     {
-        require $this->viewPath;
+        include $this->viewPath;
     }
 
     /**
@@ -107,7 +107,7 @@ abstract class Controller
 
         $filePath = $partialsDir . DIRECTORY_SEPARATOR . $fileName;
 
-        require $filePath;
+        include $filePath;
     }
 
     /**

@@ -19,7 +19,8 @@ else
 define('BASE_PATH', realpath(__DIR__   . '/../'));
 const APP_PATH = BASE_PATH . '/Application';
 
-/** @noinspection PhpIncludeInspection */
+require_once(BASE_PATH . '/lib/KissMVC/Application.php');
+require_once(BASE_PATH . '/Application/Bootstrapper.php');
 require_once(BASE_PATH . '/vendor/autoload.php');
 
 Application::loadConfiguration(APP_PATH . '/Config/main.php');

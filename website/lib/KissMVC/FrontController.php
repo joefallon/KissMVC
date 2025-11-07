@@ -120,10 +120,16 @@ class FrontController
             // Provide parameters, execute business logic, then render.
             $controller->setRequestParameters($requestParameters ?? []);
             $controller->execute();
+
+            ob_start();
             $controller->renderLayout();
+            ob_end_flush();
         }
         catch(Throwable $e)
         {
+            // Discard any partial output produced after we started buffering.
+            ob_end_clean();
+
             // Render a friendly 500 page and stop.
             $this->display500Page($e);
         }
@@ -184,7 +190,9 @@ class FrontController
 
         if(is_readable($view))
         {
-            require $view;
+            ob_start();
+            include $view;
+            ob_end_flush();
 
             return;
         }
@@ -217,7 +225,10 @@ class FrontController
         {
             // Make the throwable available to the 500 view if it wants it.
             $exception = $e; // intentionally short-lived local for templates.
-            require $view;
+
+            ob_start();
+            include $view;
+            ob_end_flush();
 
             return;
         }
