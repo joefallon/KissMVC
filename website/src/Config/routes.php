@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 use KissMVC\Controller;
-use Application\Controllers\IndexControllerFactory;
-use Application\Controllers\PageWithParametersControllerFactory;
+use Controllers\IndexControllerFactory;
+use Controllers\PageWithParametersControllerFactory;
 
 /**
  * routeToController

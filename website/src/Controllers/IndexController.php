@@ -23,7 +23,7 @@ declare(strict_types=1);
  * THE SOFTWARE.
  */
 
-namespace Application\Controllers;
+namespace Controllers;
 
 use KissMVC\Controller;
 

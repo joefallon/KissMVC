@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Application\Controllers;
+namespace Controllers;
 
 use KissMVC\Controller;
 use KissMVC\ControllerFactoryInterface;

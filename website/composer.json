@@ -19,8 +19,7 @@
     },
     "autoload": {
         "psr-4": {
-            "KissMVC\\": "lib/KissMVC/",
-            "Application\\": "Application/"
+            "KissMVC\\": "lib/KissMVC/"
         }
     }
 }
