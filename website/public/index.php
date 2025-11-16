@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 use KissMVC\Application;
-use Application\Bootstrapper;
 
 // Define the application environment.
 if(getenv('APPLICATION_ENV') == null)
@@ -17,10 +16,10 @@ else
 }
 
 define('BASE_PATH', realpath(__DIR__   . '/../'));
-const APP_PATH = BASE_PATH . '/Application';
+const APP_PATH = BASE_PATH . '/src';
 
 require_once(BASE_PATH . '/lib/KissMVC/Application.php');
-require_once(BASE_PATH . '/Application/Bootstrapper.php');
+require_once(BASE_PATH . '/src/Bootstrapper.php');
 require_once(BASE_PATH . '/vendor/autoload.php');
 
 Application::loadConfiguration(APP_PATH . '/Config/main.php');

@@ -82,14 +82,7 @@ cd myapp/website
 composer install
 
 # 3. Configure your application
-cp application/config/main.php application/config/main.local.php
-# Edit main.local.php with your database credentials and settings
-
-# 4. Start the built-in PHP server (for local development)
-php -S localhost:8000 -t public
-
-# 5. Open your browser
-# Visit: http://localhost:8000
+src/Config/main.php
 ```
 
 You should see the default "Hello, World!" page.
@@ -119,7 +112,7 @@ package; instead, you clone or download the entire skeleton.
 ```
 YourAppName/
 │
-├── application/             # Application code (not web-accessible)
+├── src/                     # Application code (not web-accessible)
 │   ├── Bootstrapper.php     # App initialization (DB, services, etc.)
 │   ├── Config/
 │   │   ├── main.php         # Main configuration (DB, paths, timezone)
@@ -262,7 +255,7 @@ KissMVC uses the **Front Controller** pattern combined with **MVC**
 
 ### Routing
 
-Routes are defined in `Application/Config/routes.php`. The router maps a
+Routes are defined in `src/Config/routes.php`. The router maps a
 single URL segment to a controller.
 
 **Example URL:**
@@ -332,7 +325,7 @@ Controllers are page-specific classes that:
 <?php
 declare(strict_types=1);
 
-namespace Application\Controllers;
+namespace Controllers;
 
 use KissMVC\Controller;
 
@@ -381,7 +374,7 @@ They implement `ControllerFactoryInterface`.
 <?php
 declare(strict_types=1);
 
-namespace Application\Controllers;
+namespace Controllers;
 
 use KissMVC\ControllerFactoryInterface;
 
@@ -404,7 +397,7 @@ class IndexControllerFactory implements ControllerFactoryInterface
 
 **Layouts** wrap views with common HTML structure (header, footer, nav).
 
-**Example: application/layouts/default.php**
+**Example: src/Layouts/default.php**
 
 ```php
 <!DOCTYPE html>
@@ -430,10 +423,10 @@ class IndexControllerFactory implements ControllerFactoryInterface
 
 **Views** contain page-specific HTML.
 
-**Example: application/views/index.php**
+**Example: src/Views/index.php**
 
 ```php
-<?php /* @var $this \Application\Controllers\IndexController */ ?>
+<?php /* @var $this Controllers\IndexController */ ?>
 
 <h1>Welcome to KissMVC</h1>
 
@@ -455,7 +448,7 @@ $this->renderPartial('test.php', ['data' => 'Example Data']);
 
 **Partials** are reusable snippets.
 
-**Example: application/partials/test.php**
+**Example: src/Partials/test.php**
 
 ```php
 <div class="alert">
@@ -505,13 +498,13 @@ KissMVC does **not** include a model or ORM layer. You are free to use:
 - **Domain**: `UserAuthenticator`, `PostValidator` (business rules)
 - **Models**: `LoginModel`, `PostListModel` (page orchestration)
 
-Place these in their respective `application/` subdirectories.
+Place these in their respective `src/` subdirectories.
 
 ---
 
 ## Configuration
 
-Configuration lives in `Application/Config/main.php`. It returns an array of
+Configuration lives in `src/Config/main.php`. It returns an array of
 settings consumed by `Application::loadConfiguration()`.
 
 **Environment variables** (set in `.env`, server config, or shell):
@@ -535,13 +528,13 @@ Follow these steps to add a new page (e.g. "About Us"):
 
 ### 1. Create the controller
 
-**File: `application/Controllers/AboutController.php`**
+**File: `src/Controllers/AboutController.php`**
 
 ```php
 <?php
 declare(strict_types=1);
 
-namespace Application\Controllers;
+namespace Controllers;
 
 use KissMVC\Controller;
 
@@ -570,13 +563,13 @@ class AboutController extends Controller
 
 ### 2. Create the factory
 
-**File: `application/Controllers/AboutControllerFactory.php`**
+**File: `src/Controllers/AboutControllerFactory.php`**
 
 ```php
 <?php
 declare(strict_types=1);
 
-namespace Application\Controllers;
+namespace Controllers;
 
 use KissMVC\ControllerFactoryInterface;
 
@@ -591,10 +584,10 @@ class AboutControllerFactory implements ControllerFactoryInterface
 
 ### 3. Add the route
 
-**File: `application/config/routes.php`**
+**File: `src/Config/routes.php`**
 
 ```php
-use Application\Controllers\AboutControllerFactory;
+use Controllers\AboutControllerFactory;
 
     switch($route)
     {
@@ -611,10 +604,10 @@ use Application\Controllers\AboutControllerFactory;
 
 ### 4. Create the view
 
-**File: `application/views/about.php`**
+**File: `src/Views/about.php`**
 
 ```php
-<?php /* @var $this \Application\Controllers\AboutController */ ?>
+<?php /* @var $this Controllers\AboutController */ ?>
 
 <h1>About Us</h1>
 
@@ -827,7 +820,7 @@ tests/
 ```php
 <?php
 use PHPUnit\Framework\TestCase;
-use Application\Controllers\IndexController;
+use Controllers\IndexController;
 
 class IndexControllerTest extends TestCase
 {

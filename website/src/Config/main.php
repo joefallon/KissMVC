@@ -135,9 +135,9 @@ $config['timezone'] = getenv('APP_TIMEZONE') ?: 'UTC';
  * Set paths to views, partials, and layouts directories. These are relative to
  * BASE_PATH. Adjust as needed if your project structure differs.
  */
-$config['views_directory']    = BASE_PATH . '/Application/Views';
-$config['partials_directory'] = BASE_PATH . '/Application/Partials';
-$config['layouts_directory']  = BASE_PATH . '/Application/Layouts';
+$config['views_directory']    = BASE_PATH . '/src/Views';
+$config['partials_directory'] = BASE_PATH . '/src/Partials';
+$config['layouts_directory']  = BASE_PATH . '/src/Layouts';
 
 
 // Cleanup temporaries.
