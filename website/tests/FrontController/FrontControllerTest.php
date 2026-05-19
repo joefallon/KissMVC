@@ -9,6 +9,7 @@ use FilesystemIterator;
 use KissMVC\Application;
 use KissMVC\Controller;
 use KissMVC\FrontController;
+use KissMVC\FrontControllerBuilder;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -65,6 +66,20 @@ final class FrontControllerTest extends TestCase
         $frontController = new FrontControllerProbe();
 
         self::assertSame(['page-with-parameters', 'abc', '123', 'xyz'], $frontController->readRequestParameters());
+    }
+
+    public function testGetRequestParametersSkipsEmptySegments(): void
+    {
+        $this->backupServerVariables();
+        $_SERVER['REQUEST_URI'] = '/subdir/page-with-parameters//abc/123/xyz/?foo=bar';
+        $_SERVER['SCRIPT_NAME'] = '/subdir/index.php';
+
+        $frontController = new FrontControllerProbe();
+
+        self::assertSame(
+            ['page-with-parameters', 'abc', '123', 'xyz'],
+            $frontController->readRequestParameters()
+        );
     }
 
     public function testResolveControllerReturnsExpectedControllers(): void
@@ -189,6 +204,59 @@ PHP;
         $output = ob_get_clean();
 
         self::assertSame('An internal error occurred. Please try again later.', trim((string)$output));
+    }
+
+    public function testRouteRequestBuiltWithInjectedDependenciesSkips404HeaderEmissionWhenHeadersWereSent(): void
+    {
+        $headers = [];
+
+        $frontController = (new FrontControllerBuilder())
+            ->withRequestParametersProvider(static fn (): ?array => ['missing-route'])
+            ->withRouteResolver(static fn (string $route): ?Controller => null)
+            ->withHeadersSentChecker(static fn (): bool => true)
+            ->withHeaderEmitter(static function (
+                string $header,
+                bool $replace = true,
+                ?int $responseCode = null
+            ) use (&$headers): void {
+                $headers[] = [$header, $replace, $responseCode];
+            })
+            ->build();
+
+        ob_start();
+        $frontController->routeRequest();
+        $output = ob_get_clean();
+
+        self::assertSame('404 Not Found', trim((string)$output));
+        self::assertSame([], $headers);
+    }
+
+    public function testRouteRequestBuiltWithInjectedDependenciesEmits500HeadersForExceptions(): void
+    {
+        $headers = [];
+
+        $frontController = (new FrontControllerBuilder())
+            ->withRequestParametersProvider(static fn (): ?array => ['boom'])
+            ->withRouteResolver(static fn (string $route): ?Controller => new ThrowingController('ignored.php'))
+            ->withHeadersSentChecker(static fn (): bool => false)
+            ->withHeaderEmitter(static function (
+                string $header,
+                bool $replace = true,
+                ?int $responseCode = null
+            ) use (&$headers): void {
+                $headers[] = [$header, $replace, $responseCode];
+            })
+            ->build();
+
+        ob_start();
+        $frontController->routeRequest();
+        $output = ob_get_clean();
+
+        self::assertSame('An internal error occurred. Please try again later.', trim((string)$output));
+        self::assertSame([
+            ['HTTP/1.1 500 Internal Server Error', true, 500],
+            ['Status: 500 Internal Server Error', true, null],
+        ], $headers);
     }
 
     private function writeDefaultLayout(): void

@@ -192,7 +192,7 @@ class Application
 
         $url = 'https://' . $host . $uri;
 
-        if(headers_sent())
+        if(static::headersWereSent())
         {
             $msg = 'SSL required but headers already sent; cannot redirect to %s';
             trigger_error(sprintf($msg, $url), E_USER_WARNING);
@@ -200,9 +200,7 @@ class Application
             return;
         }
 
-        // Permanent redirect to HTTPS.
-        header('Location: ' . $url, true, 301);
-        exit;
+        static::redirectToHttps($url);
     }
 
     /**
@@ -228,5 +226,46 @@ class Application
         {
             trigger_error('Invalid timezone configured: ' . $timezone, E_USER_NOTICE);
         }
+    }
+
+    /**
+     * Hook for tests to override header state checks.
+     */
+    protected static function headersWereSent(): bool
+    {
+        return headers_sent();
+    }
+
+    /**
+     * Hook for tests to capture emitted headers without sending real ones.
+     */
+    protected static function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
+    {
+        if($responseCode === null)
+        {
+            header($header, $replace);
+
+            return;
+        }
+
+        header($header, $replace, $responseCode);
+    }
+
+    /**
+     * Hook for tests to intercept HTTPS redirects without exiting.
+     */
+    protected static function redirectToHttps(string $url): void
+    {
+        // Permanent redirect to HTTPS.
+        static::emitHeader('Location: ' . $url, true, 301);
+        static::beforeExitFromRedirect($url);
+        exit;
+    }
+
+    /**
+     * Hook for tests to intercept the redirect flow before the hard exit.
+     */
+    protected static function beforeExitFromRedirect(string $url): void
+    {
     }
 }

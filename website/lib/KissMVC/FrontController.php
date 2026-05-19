@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace KissMVC;
 
+use Closure;
 use Throwable;
 
 /**
@@ -73,6 +74,31 @@ class FrontController
     private const string DEFAULT_CONTROLLER = 'default';
     private const string HTTP_404_VIEW      = '404.php';
     private const string HTTP_500_VIEW      = '500.php';
+
+    private ?Closure $requestParametersProvider = null;
+    private ?Closure $routeResolver = null;
+    private ?Closure $headersSentChecker = null;
+    private ?Closure $headerEmitter = null;
+
+    public function __construct(
+        ?callable $requestParametersProvider = null,
+        ?callable $routeResolver = null,
+        ?callable $headersSentChecker = null,
+        ?callable $headerEmitter = null
+    ) {
+        $this->requestParametersProvider = $requestParametersProvider !== null
+            ? Closure::fromCallable($requestParametersProvider)
+            : null;
+        $this->routeResolver = $routeResolver !== null
+            ? Closure::fromCallable($routeResolver)
+            : null;
+        $this->headersSentChecker = $headersSentChecker !== null
+            ? Closure::fromCallable($headersSentChecker)
+            : null;
+        $this->headerEmitter = $headerEmitter !== null
+            ? Closure::fromCallable($headerEmitter)
+            : null;
+    }
 
     /**
      * Route the current HTTP request to the appropriate controller and render.
@@ -148,6 +174,11 @@ class FrontController
      */
     protected function getRequestParameters(): ?array
     {
+        if($this->requestParametersProvider !== null)
+        {
+            return ($this->requestParametersProvider)();
+        }
+
         $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
         $scriptDir = $scriptName !== '' ? dirname($scriptName) : '';
@@ -178,6 +209,11 @@ class FrontController
      */
     protected function resolveController(string $route): ?Controller
     {
+        if($this->routeResolver !== null)
+        {
+            return ($this->routeResolver)($route);
+        }
+
         return function_exists('routeToController')
             ? routeToController($route)
             : null;
@@ -192,10 +228,10 @@ class FrontController
         $_SERVER['REDIRECT_STATUS'] = 404;
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
 
-        if(!headers_sent())
+        if(!$this->headersWereSent())
         {
-            header($protocol . ' 404 Not Found', true, 404);
-            header('Status: 404 Not Found');
+            $this->emitHeader($protocol . ' 404 Not Found', true, 404);
+            $this->emitHeader('Status: 404 Not Found');
         }
 
         $dir = Application::getRegistryItem('views_directory') ?? '';
@@ -224,10 +260,10 @@ class FrontController
         $_SERVER['REDIRECT_STATUS'] = 500;
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
 
-        if(!headers_sent())
+        if(!$this->headersWereSent())
         {
-            header($protocol . ' 500 Internal Server Error', true, 500);
-            header('Status: 500 Internal Server Error');
+            $this->emitHeader($protocol . ' 500 Internal Server Error', true, 500);
+            $this->emitHeader('Status: 500 Internal Server Error');
         }
 
         $dir = Application::getRegistryItem('views_directory') ?? '';
@@ -275,5 +311,37 @@ class FrontController
         }
 
         return $params;
+    }
+
+    /**
+     * Hook for tests and builders to customize header state checks.
+     */
+    protected function headersWereSent(): bool
+    {
+        return $this->headersSentChecker !== null
+            ? (bool) ($this->headersSentChecker)()
+            : headers_sent();
+    }
+
+    /**
+     * Hook for tests and builders to capture emitted headers.
+     */
+    protected function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
+    {
+        if($this->headerEmitter !== null)
+        {
+            ($this->headerEmitter)($header, $replace, $responseCode);
+
+            return;
+        }
+
+        if($responseCode === null)
+        {
+            header($header, $replace);
+
+            return;
+        }
+
+        header($header, $replace, $responseCode);
     }
 }

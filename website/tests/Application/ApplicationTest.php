@@ -18,6 +18,7 @@ final class ApplicationTest extends TestCase
     protected function setUp(): void
     {
         self::resetRegistry();
+        ApplicationTestHarness::resetHeaderCapture();
         $this->tempDir = $this->createTempDirectory();
     }
 
@@ -25,6 +26,7 @@ final class ApplicationTest extends TestCase
     protected function tearDown(): void
     {
         self::resetRegistry();
+        ApplicationTestHarness::resetHeaderCapture();
         $this->removeTempDirectory($this->tempDir);
     }
 
@@ -111,6 +113,40 @@ final class ApplicationTest extends TestCase
             ApplicationTestHarness::invokeSetTimeZone();
 
             self::assertSame('UTC', date_default_timezone_get());
+        }
+        finally
+        {
+            date_default_timezone_set($originalTimezone);
+        }
+    }
+
+    public function testSetTimeZoneIgnoresEmptyTimezoneString(): void
+    {
+        $originalTimezone = date_default_timezone_get();
+        Application::setRegistryItem('timezone', '');
+
+        try
+        {
+            ApplicationTestHarness::invokeSetTimeZone();
+
+            self::assertSame($originalTimezone, date_default_timezone_get());
+        }
+        finally
+        {
+            date_default_timezone_set($originalTimezone);
+        }
+    }
+
+    public function testSetTimeZoneIgnoresNonStringTimezoneValue(): void
+    {
+        $originalTimezone = date_default_timezone_get();
+        Application::setRegistryItem('timezone', 123);
+
+        try
+        {
+            ApplicationTestHarness::invokeSetTimeZone();
+
+            self::assertSame($originalTimezone, date_default_timezone_get());
         }
         finally
         {
@@ -235,16 +271,44 @@ final class ApplicationTest extends TestCase
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
-    public function testCheckSslTriggersWarningWhenHeadersWereAlreadySent(): void
+    public function testCheckSslRedirectsToHttpsWhenTheRequestIsNotSecure(): void
     {
-        require_once __DIR__ . '/../Support/KissMvcNamespaceStubs.php';
-
         $server = $this->withServerVariables([
             'SERVER_NAME' => 'fallback.test',
             'REQUEST_URI' => '/secure',
         ]);
 
         Application::setRegistryItem('ssl_required', true);
+
+        ob_start();
+        try
+        {
+            ApplicationRedirectHarness::invokeCheckSsl();
+            self::fail('Expected RedirectIntercepted to be thrown');
+        }
+        catch(RedirectIntercepted $e)
+        {
+            self::assertSame('https://fallback.test/secure', $e->getUrl());
+        }
+        finally
+        {
+            if(ob_get_level() > 0)
+            {
+                ob_end_clean();
+            }
+            $this->restoreServerVariables($server);
+        }
+    }
+
+    public function testCheckSslTriggersWarningWhenHeadersWereAlreadySent(): void
+    {
+        $server = $this->withServerVariables([
+            'SERVER_NAME' => 'fallback.test',
+            'REQUEST_URI' => '/secure',
+        ]);
+
+        Application::setRegistryItem('ssl_required', true);
+        ApplicationTestHarness::setHeadersSent(true);
         $errors = [];
 
         set_error_handler(static function (int $severity, string $message) use (&$errors): bool {
@@ -269,6 +333,7 @@ final class ApplicationTest extends TestCase
             'SSL required but headers already sent; cannot redirect to https://fallback.test/secure',
             $errors[0][1]
         );
+        self::assertSame([], ApplicationTestHarness::emittedHeaders());
     }
 
     public function testRunUsesAnInjectedFrontControllerFactory(): void
@@ -379,6 +444,9 @@ final class ApplicationTest extends TestCase
 
 final class ApplicationTestHarness extends Application
 {
+    private static bool $headersSent = false;
+    private static array $emittedHeaders = [];
+
     public static function invokeCheckSsl(): void
     {
         parent::checkSsl();
@@ -387,6 +455,58 @@ final class ApplicationTestHarness extends Application
     public static function invokeSetTimeZone(): void
     {
         parent::setTimeZone();
+    }
+
+    public static function setHeadersSent(bool $headersSent): void
+    {
+        self::$headersSent = $headersSent;
+    }
+
+    public static function emittedHeaders(): array
+    {
+        return self::$emittedHeaders;
+    }
+
+    public static function resetHeaderCapture(): void
+    {
+        self::$headersSent = false;
+        self::$emittedHeaders = [];
+    }
+
+    protected static function headersWereSent(): bool
+    {
+        return self::$headersSent;
+    }
+
+    protected static function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
+    {
+        self::$emittedHeaders[] = [$header, $replace, $responseCode];
+    }
+}
+
+final class ApplicationRedirectHarness extends Application
+{
+    public static function invokeCheckSsl(): void
+    {
+        parent::checkSsl();
+    }
+
+    protected static function beforeExitFromRedirect(string $url): void
+    {
+        throw new RedirectIntercepted($url);
+    }
+}
+
+final class RedirectIntercepted extends RuntimeException
+{
+    public function __construct(private string $url)
+    {
+        parent::__construct($url);
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
     }
 }
 
