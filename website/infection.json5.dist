@@ -1,0 +1,36 @@
+{
+    // Keep the initial run exploratory while the mutation baseline is being established.
+    timeout: 60,
+    source: {
+        directories: [
+            "lib",
+            "src",
+        ],
+        excludes: [
+            "KissMVC/*Builder.php",
+            "KissMVC/*Factory.php",
+            "KissMVC/*FactoryInterface.php",
+            "KissMVC/*Options.php",
+            "KissMVC/*Interface.php",
+            "Controllers/*Factory.php",
+            "Controllers/*FactoryInterface.php",
+            "Layouts",
+            "Partials",
+            "Views",
+            "vendor",
+        ],
+    },
+    logs: {
+        text: "build/mutation/text.log",
+        summary: "build/mutation/summary.log",
+        json: "build/mutation/report.json",
+        html: "build/mutation/report.html",
+    },
+    phpUnit: {
+        configDir: ".",
+    },
+    testFramework: "phpunit",
+    mutators: {
+        "@default": true,
+    },
+}
