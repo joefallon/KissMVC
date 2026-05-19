@@ -97,12 +97,9 @@ final class ControllerRenderingAcceptanceTest extends TestCase
     {
         $controller = $this->createController('render-layout.php');
 
-        $output = $this->renderController(
-            static function (Controller $controller): void {
-                $controller->renderPartial('partial.php', ['value' => 'partial-data']);
-            },
-            $controller
-        );
+        $output = $this->renderController(static function (Controller $controller): void {
+            $controller->renderPartial('partial.php', ['value' => 'partial-data']);
+        }, $controller);
 
         self::assertStringContainsString('partial-data:partial-data', $output);
     }
@@ -119,10 +116,10 @@ final class ControllerRenderingAcceptanceTest extends TestCase
         self::assertStringContainsString('params:a,b,c', $output);
     }
 
-    private function createController(string $layoutFileName, ?string $viewFileName = null, array $requestParameters = []): Controller
+    private function createController(string $layoutFileName, ?string $viewFileName = null,
+                                      array $requestParameters = []): Controller
     {
-        $controller = new class extends Controller
-        {
+        $controller = new class extends Controller {
             private string $presentationValue = 'presentation-value';
 
             public function configure(string $layoutFileName, ?string $viewFileName, array $requestParameters): void
@@ -153,7 +150,7 @@ final class ControllerRenderingAcceptanceTest extends TestCase
         ob_start();
         $renderer($controller);
 
-        return (string) ob_get_clean();
+        return (string)ob_get_clean();
     }
 
     private function writeFixtures(): void
@@ -161,46 +158,53 @@ final class ControllerRenderingAcceptanceTest extends TestCase
         $this->writeFile('layouts', 'render-layout.php', <<<'PHP'
 <?php
 echo 'layout-start';
-PHP);
+PHP
+        );
 
         $this->writeFile('layouts', 'render-view.php', <<<'PHP'
 <?php
 echo 'layout-start|';
 $this->renderView();
 echo '|layout-end';
-PHP);
+PHP
+        );
 
         $this->writeFile('views', 'selected-view.php', <<<'PHP'
 <?php
 echo 'view-marker';
-PHP);
+PHP
+        );
 
         $this->writeFile('views', 'presentation-view.php', <<<'PHP'
 <?php
 echo 'presentation-value:' . $this->getPresentationValue();
-PHP);
+PHP
+        );
 
         $this->writeFile('views', 'view-with-partial.php', <<<'PHP'
 <?php
 echo 'view-start|';
 $this->renderPartial('partial.php', ['value' => 'partial-data']);
 echo '|view-end';
-PHP);
+PHP
+        );
 
         $this->writeFile('views', 'params-view.php', <<<'PHP'
 <?php
 echo 'params:' . implode(',', $this->getRequestParameters());
-PHP);
+PHP
+        );
 
         $this->writeFile('partials', 'partial.php', <<<'PHP'
 <?php
 echo 'partial-data:' . ($data['value'] ?? 'missing');
-PHP);
+PHP
+        );
     }
 
     private function writeFile(string $directory, string $fileName, string $contents): void
     {
-        $targetDirectory = match($directory)
+        $targetDirectory = match ($directory)
         {
             'layouts' => $this->layoutsDir,
             'partials' => $this->partialsDir,
