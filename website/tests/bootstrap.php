@@ -1,52 +1,24 @@
 <?php
 declare(strict_types=1);
 
-// Enable strict error reporting for tests.
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
+$basePath = dirname(__DIR__);
 
-// Only set timezone when none is configured.
-if(!ini_get('date.timezone'))
-{
-    date_default_timezone_set('UTC');
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', $basePath);
 }
 
-// Resolve and validate base path.
-//$basePath = realpath(__DIR__ . '/../../');
-//
-//if($basePath === false)
-//{
-//    throw new RuntimeException('Could not resolve BASE_PATH from `' . __FILE__ . '`');
-//}
-//
-//$basePath = rtrim($basePath, DIRECTORY_SEPARATOR);
-//
-//if(!defined('BASE_PATH'))
-//{
-//    define('BASE_PATH', $basePath);
-//}
-//
-//if(!defined('APP_PATH'))
-//{
-//    define('APP_PATH', BASE_PATH . '/Application');
-//}
-//
-//if(!defined('TESTS_PATH'))
-//{
-//    define('TESTS_PATH', BASE_PATH . '/Tests');
-//}
+if (!defined('APP_PATH')) {
+    define('APP_PATH', BASE_PATH . '/src');
+}
 
-const DB_NAME = 'dbname';
-const DB_HOST = 'localhost';
-const DB_USER = 'username';
-const DB_PASS = 'password';
+if (!defined('TESTS_PATH')) {
+    define('TESTS_PATH', BASE_PATH . '/tests');
+}
 
-// Require Composer autoloader and fail fast if missing.
 $autoload = BASE_PATH . '/vendor/autoload.php';
 
-if(!file_exists($autoload))
-{
-    throw new RuntimeException('Composer autoload not found at: ' . $autoload . '. Run `composer install`.');
+if (!is_file($autoload)) {
+    throw new RuntimeException('Composer autoload not found at ' . $autoload . '. Run composer install before testing.');
 }
 
 require_once $autoload;
