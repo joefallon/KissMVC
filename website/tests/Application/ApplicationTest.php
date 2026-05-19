@@ -5,7 +5,9 @@ namespace Tests\Application;
 
 use FilesystemIterator;
 use KissMVC\Application;
+use KissMVC\ApplicationBuilder;
 use KissMVC\FrontController;
+use KissMVC\ApplicationRunner;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -14,19 +16,15 @@ final class ApplicationTest extends TestCase
 {
     private string $tempDir = '';
 
-    /** @noinspection PhpMissingParentCallCommonInspection */
     protected function setUp(): void
     {
         self::resetRegistry();
-        ApplicationTestHarness::resetHeaderCapture();
         $this->tempDir = $this->createTempDirectory();
     }
 
-    /** @noinspection PhpMissingParentCallCommonInspection */
     protected function tearDown(): void
     {
         self::resetRegistry();
-        ApplicationTestHarness::resetHeaderCapture();
         $this->removeTempDirectory($this->tempDir);
     }
 
@@ -89,11 +87,10 @@ final class ApplicationTest extends TestCase
     public function testSetTimeZoneLeavesCurrentTimezoneAloneWhenNotConfigured(): void
     {
         $originalTimezone = date_default_timezone_get();
-        Application::setRegistryItem('app_name', 'KissMVC');
 
         try
         {
-            ApplicationTestHarness::invokeSetTimeZone();
+            (new ApplicationBuilder())->build()->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -110,7 +107,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            ApplicationTestHarness::invokeSetTimeZone();
+            (new ApplicationBuilder())->build()->setTimeZone();
 
             self::assertSame('UTC', date_default_timezone_get());
         }
@@ -127,7 +124,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            ApplicationTestHarness::invokeSetTimeZone();
+            (new ApplicationBuilder())->build()->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -144,7 +141,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            ApplicationTestHarness::invokeSetTimeZone();
+            (new ApplicationBuilder())->build()->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -168,7 +165,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            ApplicationTestHarness::invokeSetTimeZone();
+            (new ApplicationBuilder())->build()->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -186,14 +183,16 @@ final class ApplicationTest extends TestCase
     public function testCheckSslReturnsWithoutRedirectWhenSslIsNotRequired(): void
     {
         $server = $this->withServerVariables([]);
+        $headers = [];
+        $redirects = [];
         Application::setRegistryItem('ssl_required', false);
-        $headersBefore = headers_list();
 
         try
         {
-            ApplicationTestHarness::invokeCheckSsl();
+            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
 
-            self::assertSame($headersBefore, headers_list());
+            self::assertSame([], $headers);
+            self::assertSame([], $redirects);
         }
         finally
         {
@@ -208,14 +207,16 @@ final class ApplicationTest extends TestCase
             'HTTP_HOST' => 'example.test',
             'REQUEST_URI' => '/secure',
         ]);
+        $headers = [];
+        $redirects = [];
         Application::setRegistryItem('ssl_required', true);
-        $headersBefore = headers_list();
 
         try
         {
-            ApplicationTestHarness::invokeCheckSsl();
+            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
 
-            self::assertSame($headersBefore, headers_list());
+            self::assertSame([], $headers);
+            self::assertSame([], $redirects);
         }
         finally
         {
@@ -230,14 +231,16 @@ final class ApplicationTest extends TestCase
             'HTTP_HOST' => 'example.test',
             'REQUEST_URI' => '/secure',
         ]);
+        $headers = [];
+        $redirects = [];
         Application::setRegistryItem('ssl_required', true);
-        $headersBefore = headers_list();
 
         try
         {
-            ApplicationTestHarness::invokeCheckSsl();
+            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
 
-            self::assertSame($headersBefore, headers_list());
+            self::assertSame([], $headers);
+            self::assertSame([], $redirects);
         }
         finally
         {
@@ -252,14 +255,16 @@ final class ApplicationTest extends TestCase
             'HTTP_HOST' => 'example.test',
             'REQUEST_URI' => '/secure',
         ]);
+        $headers = [];
+        $redirects = [];
         Application::setRegistryItem('ssl_required', true);
-        $headersBefore = headers_list();
 
         try
         {
-            ApplicationTestHarness::invokeCheckSsl();
+            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
 
-            self::assertSame($headersBefore, headers_list());
+            self::assertSame([], $headers);
+            self::assertSame([], $redirects);
         }
         finally
         {
@@ -267,35 +272,27 @@ final class ApplicationTest extends TestCase
         }
     }
 
-    /**
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
     public function testCheckSslRedirectsToHttpsWhenTheRequestIsNotSecure(): void
     {
         $server = $this->withServerVariables([
             'SERVER_NAME' => 'fallback.test',
             'REQUEST_URI' => '/secure',
         ]);
-
+        $headers = [];
+        $redirects = [];
         Application::setRegistryItem('ssl_required', true);
 
-        ob_start();
         try
         {
-            ApplicationRedirectHarness::invokeCheckSsl();
-            self::fail('Expected RedirectIntercepted to be thrown');
-        }
-        catch(RedirectIntercepted $e)
-        {
-            self::assertSame('https://fallback.test/secure', $e->getUrl());
+            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
+
+            self::assertSame([
+                ['Location: https://fallback.test/secure', true, 301],
+            ], $headers);
+            self::assertSame(['https://fallback.test/secure'], $redirects);
         }
         finally
         {
-            if(ob_get_level() > 0)
-            {
-                ob_end_clean();
-            }
             $this->restoreServerVariables($server);
         }
     }
@@ -306,9 +303,9 @@ final class ApplicationTest extends TestCase
             'SERVER_NAME' => 'fallback.test',
             'REQUEST_URI' => '/secure',
         ]);
-
+        $headers = [];
+        $redirects = [];
         Application::setRegistryItem('ssl_required', true);
-        ApplicationTestHarness::setHeadersSent(true);
         $errors = [];
 
         set_error_handler(static function (int $severity, string $message) use (&$errors): bool {
@@ -319,7 +316,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            ApplicationTestHarness::invokeCheckSsl();
+            $this->createApplicationRunner(true, $headers, $redirects)->checkSsl();
         }
         finally
         {
@@ -333,15 +330,46 @@ final class ApplicationTest extends TestCase
             'SSL required but headers already sent; cannot redirect to https://fallback.test/secure',
             $errors[0][1]
         );
-        self::assertSame([], ApplicationTestHarness::emittedHeaders());
+        self::assertSame([], $headers);
+        self::assertSame([], $redirects);
     }
 
     public function testRunUsesAnInjectedFrontControllerFactory(): void
     {
-        $frontController = new TestFrontControllerForRun();
-        Application::setRegistryItem('ssl_required', false);
+        $frontController = new class extends FrontController
+        {
+            public bool $wasRouted = false;
 
-        Application::run(static fn (): TestFrontControllerForRun => $frontController);
+            public function routeRequest(): void
+            {
+                $this->wasRouted = true;
+            }
+        };
+
+        Application::setRegistryItem('ssl_required', false);
+        Application::run(static fn (): FrontController => $frontController);
+
+        self::assertTrue($frontController->wasRouted);
+    }
+
+    public function testRunUsesAnInjectedApplicationBuilder(): void
+    {
+        $frontController = new class extends FrontController
+        {
+            public bool $wasRouted = false;
+
+            public function routeRequest(): void
+            {
+                $this->wasRouted = true;
+            }
+        };
+
+        Application::setRegistryItem('ssl_required', false);
+        $builder = (new ApplicationBuilder())->withFrontControllerFactory(
+            static fn (): FrontController => $frontController
+        );
+
+        Application::run($builder);
 
         self::assertTrue($frontController->wasRouted);
     }
@@ -356,7 +384,10 @@ final class ApplicationTest extends TestCase
 
         file_put_contents(
             $layoutsDir . DIRECTORY_SEPARATOR . 'default.php',
-            "<?php\necho 'layout:' . \$this->getPageTitle();\n"
+            <<<'PHP'
+<?php
+echo 'layout:' . $this->getPageTitle();
+PHP
         );
 
         $server = $this->withServerVariables([
@@ -379,6 +410,26 @@ final class ApplicationTest extends TestCase
         {
             $this->restoreServerVariables($server);
         }
+    }
+
+    private function createApplicationRunner(
+        bool $headersSent,
+        array &$headers,
+        array &$redirects
+    ): ApplicationRunner {
+        return (new ApplicationBuilder())
+            ->withHeadersSentChecker(static fn (): bool => $headersSent)
+            ->withHeaderEmitter(static function (
+                string $header,
+                bool $replace = true,
+                ?int $responseCode = null
+            ) use (&$headers): void {
+                $headers[] = [$header, $replace, $responseCode];
+            })
+            ->withRedirectTerminator(static function (string $url) use (&$redirects): void {
+                $redirects[] = $url;
+            })
+            ->build();
     }
 
     private function createTempDirectory(): string
@@ -423,7 +474,6 @@ final class ApplicationTest extends TestCase
     private static function resetRegistry(): void
     {
         $property = new ReflectionProperty(Application::class, 'config');
-        /** @noinspection PhpExpressionResultUnusedInspection */
         $property->setAccessible(true);
         $property->setValue(null, null);
     }
@@ -439,84 +489,5 @@ final class ApplicationTest extends TestCase
     private function restoreServerVariables(array $original): void
     {
         $_SERVER = $original;
-    }
-}
-
-final class ApplicationTestHarness extends Application
-{
-    private static bool $headersSent = false;
-    private static array $emittedHeaders = [];
-
-    public static function invokeCheckSsl(): void
-    {
-        parent::checkSsl();
-    }
-
-    public static function invokeSetTimeZone(): void
-    {
-        parent::setTimeZone();
-    }
-
-    public static function setHeadersSent(bool $headersSent): void
-    {
-        self::$headersSent = $headersSent;
-    }
-
-    public static function emittedHeaders(): array
-    {
-        return self::$emittedHeaders;
-    }
-
-    public static function resetHeaderCapture(): void
-    {
-        self::$headersSent = false;
-        self::$emittedHeaders = [];
-    }
-
-    protected static function headersWereSent(): bool
-    {
-        return self::$headersSent;
-    }
-
-    protected static function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
-    {
-        self::$emittedHeaders[] = [$header, $replace, $responseCode];
-    }
-}
-
-final class ApplicationRedirectHarness extends Application
-{
-    public static function invokeCheckSsl(): void
-    {
-        parent::checkSsl();
-    }
-
-    protected static function beforeExitFromRedirect(string $url): void
-    {
-        throw new RedirectIntercepted($url);
-    }
-}
-
-final class RedirectIntercepted extends RuntimeException
-{
-    public function __construct(private string $url)
-    {
-        parent::__construct($url);
-    }
-
-    public function getUrl(): string
-    {
-        return $this->url;
-    }
-}
-
-final class TestFrontControllerForRun extends FrontController
-{
-    public bool $wasRouted = false;
-
-    /** @noinspection PhpMissingParentCallCommonInspection */
-    public function routeRequest(): void
-    {
-        $this->wasRouted = true;
     }
 }

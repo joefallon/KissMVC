@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Tests\FrontController;
 
-use Controllers\IndexController;
-use Controllers\PageWithParametersController;
 use FilesystemIterator;
 use KissMVC\Application;
 use KissMVC\Controller;
@@ -13,18 +11,19 @@ use KissMVC\FrontControllerBuilder;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
-use Throwable;
 
 final class FrontControllerTest extends TestCase
 {
     private string $tempDir = '';
     private string $layoutsDir = '';
     private string $viewsDir = '';
+    private array $serverBackup = [];
 
     /** @noinspection PhpMissingParentCallCommonInspection */
     protected function setUp(): void
     {
         self::resetRegistry();
+        $this->serverBackup = $_SERVER;
 
         $this->tempDir = $this->createTempDirectory();
         $this->layoutsDir = $this->tempDir . DIRECTORY_SEPARATOR . 'layouts';
@@ -42,54 +41,8 @@ final class FrontControllerTest extends TestCase
     protected function tearDown(): void
     {
         self::resetRegistry();
-        $this->restoreServerVariables($this->serverBackup ?? []);
+        $this->restoreServerVariables($this->serverBackup);
         $this->removeTempDirectory($this->tempDir);
-    }
-
-    public function testGetRequestParametersReturnsNullForRootRequest(): void
-    {
-        $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/';
-        $_SERVER['SCRIPT_NAME'] = '/index.php';
-
-        $frontController = new FrontControllerProbe();
-
-        self::assertNull($frontController->readRequestParameters());
-    }
-
-    public function testGetRequestParametersStripsScriptDirectoryAndQueryString(): void
-    {
-        $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/subdir/page-with-parameters/abc/123/xyz?foo=bar';
-        $_SERVER['SCRIPT_NAME'] = '/subdir/index.php';
-
-        $frontController = new FrontControllerProbe();
-
-        self::assertSame(['page-with-parameters', 'abc', '123', 'xyz'], $frontController->readRequestParameters());
-    }
-
-    public function testGetRequestParametersSkipsEmptySegments(): void
-    {
-        $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/subdir/page-with-parameters//abc/123/xyz/?foo=bar';
-        $_SERVER['SCRIPT_NAME'] = '/subdir/index.php';
-
-        $frontController = new FrontControllerProbe();
-
-        self::assertSame(
-            ['page-with-parameters', 'abc', '123', 'xyz'],
-            $frontController->readRequestParameters()
-        );
-    }
-
-    public function testResolveControllerReturnsExpectedControllers(): void
-    {
-        $frontController = new FrontControllerProbe();
-
-        self::assertInstanceOf(IndexController::class, $frontController->readResolvedController('default'));
-        self::assertInstanceOf(PageWithParametersController::class,
-            $frontController->readResolvedController('page-with-parameters'));
-        self::assertNull($frontController->readResolvedController('missing-route'));
     }
 
     public function testRouteRequestRendersTheDefaultControllerForTheRootRoute(): void
@@ -104,14 +57,14 @@ final class FrontControllerTest extends TestCase
         (new FrontController())->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('layout:Index|params:', (string)$output);
+        self::assertStringContainsString('layout:Index|params:', (string) $output);
     }
 
     public function testRouteRequestPassesRemainingParametersToThePageWithParametersController(): void
     {
         $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/page-with-parameters/abc/123/xyz?foo=bar';
-        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $_SERVER['REQUEST_URI'] = '/subdir/page-with-parameters//abc/123/xyz/?foo=bar';
+        $_SERVER['SCRIPT_NAME'] = '/subdir/index.php';
 
         $this->writeDefaultLayout();
 
@@ -119,94 +72,47 @@ final class FrontControllerTest extends TestCase
         (new FrontController())->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('layout:Page with Parameters|params:abc,123,xyz', (string)$output);
+        self::assertStringContainsString('layout:Page with Parameters|params:abc,123,xyz', (string) $output);
     }
 
     public function testRouteRequestDisplaysThe404ViewForUnknownRoutes(): void
     {
-        $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/missing-route';
-        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $headers = [];
 
-        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '404.php',
-            "<?php\necho '404 view:' . (\$_SERVER['REDIRECT_STATUS'] ?? '');\n");
+        $frontController = (new FrontControllerBuilder())
+            ->withRequestParametersProvider(static fn (): ?array => ['missing-route'])
+            ->withRouteResolver(static fn (string $route): ?Controller => null)
+            ->withHeadersSentChecker(static fn (): bool => false)
+            ->withHeaderEmitter(static function (
+                string $header,
+                bool $replace = true,
+                ?int $responseCode = null
+            ) use (&$headers): void {
+                $headers[] = [$header, $replace, $responseCode];
+            })
+            ->build();
+
+        file_put_contents(
+            $this->viewsDir . DIRECTORY_SEPARATOR . '404.php',
+            <<<'PHP'
+<?php
+echo '404 view:' . ($_SERVER['REDIRECT_STATUS'] ?? '');
+PHP
+        );
 
         ob_start();
-        new FrontController()->routeRequest();
+        $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('404 view:404', (string)$output);
+        self::assertStringContainsString('404 view:404', (string) $output);
+        self::assertSame([
+            ['HTTP/1.1 404 Not Found', true, 404],
+            ['Status: 404 Not Found', true, null],
+        ], $headers);
         self::assertSame(404, $_SERVER['REDIRECT_STATUS']);
     }
 
-    public function testDisplay404PageFallsBackWhenTheViewIsMissing(): void
-    {
-        $frontController = new FrontControllerProbe();
-
-        ob_start();
-        $frontController->render404();
-        $output = ob_get_clean();
-
-        self::assertSame('404 Not Found', trim((string)$output));
-    }
-
-    public function testRouteRequestDisplaysThe500ViewForControllerExceptions(): void
-    {
-        $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/boom';
-        $_SERVER['SCRIPT_NAME'] = '/index.php';
-
-        $str = <<<'PHP'
-<?php
-$message = isset($exception) && $exception instanceof Throwable ? $exception->getMessage() : 'none';
-echo '500 view:' . $message;
-PHP;
-        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', $str);
-
-        $frontController = new ControlledFrontController(null, new ThrowingController('boom'));
-
-        ob_start();
-        $frontController->routeRequest();
-        $output = ob_get_clean();
-
-        self::assertStringContainsString('500 view:boom', (string)$output);
-        self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
-    }
-
-    public function testRouteRequestCleansUpTheBufferWhenRenderLayoutThrows(): void
-    {
-        $this->backupServerVariables();
-        $_SERVER['REQUEST_URI'] = '/late-boom';
-        $_SERVER['SCRIPT_NAME'] = '/index.php';
-
-        $str = <<<'PHP'
-<?php
-echo '500 view:' . ($exception instanceof Throwable ? $exception->getMessage() : 'none');
-PHP;
-        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', $str);
-
-        $frontController = new ControlledFrontController(null, new LateThrowingController('late-boom'));
-
-        ob_start();
-        $frontController->routeRequest();
-        $output = ob_get_clean();
-
-        self::assertStringContainsString('500 view:late-boom', (string)$output);
-        self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
-    }
-
-    public function testDisplay500PageFallsBackWhenTheViewIsMissing(): void
-    {
-        $frontController = new FrontControllerProbe();
-
-        ob_start();
-        $frontController->render500(new RuntimeException('boom'));
-        $output = ob_get_clean();
-
-        self::assertSame('An internal error occurred. Please try again later.', trim((string)$output));
-    }
-
-    public function testRouteRequestBuiltWithInjectedDependenciesSkips404HeaderEmissionWhenHeadersWereSent(): void
+    public function testRouteRequestSkips404HeaderEmissionWhenHeadersWereSent(): void
     {
         $headers = [];
 
@@ -227,18 +133,93 @@ PHP;
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertSame('404 Not Found', trim((string)$output));
+        self::assertSame('404 Not Found', trim((string) $output));
         self::assertSame([], $headers);
     }
 
-    public function testRouteRequestBuiltWithInjectedDependenciesEmits500HeadersForExceptions(): void
+    public function testRouteRequestDisplaysThe500ViewForControllerExceptions(): void
     {
         $headers = [];
 
         $frontController = (new FrontControllerBuilder())
             ->withRequestParametersProvider(static fn (): ?array => ['boom'])
-            ->withRouteResolver(static fn (string $route): ?Controller => new ThrowingController('ignored.php'))
+            ->withRouteResolver(fn (string $route): ?Controller => $this->createThrowingController())
             ->withHeadersSentChecker(static fn (): bool => false)
+            ->withHeaderEmitter(static function (
+                string $header,
+                bool $replace = true,
+                ?int $responseCode = null
+            ) use (&$headers): void {
+                $headers[] = [$header, $replace, $responseCode];
+            })
+            ->build();
+
+        file_put_contents(
+            $this->viewsDir . DIRECTORY_SEPARATOR . '500.php',
+            <<<'PHP'
+<?php
+$message = isset($exception) && $exception instanceof Throwable ? $exception->getMessage() : 'none';
+echo '500 view:' . $message;
+PHP
+        );
+
+        ob_start();
+        $frontController->routeRequest();
+        $output = ob_get_clean();
+
+        self::assertStringContainsString('500 view:boom', (string) $output);
+        self::assertSame([
+            ['HTTP/1.1 500 Internal Server Error', true, 500],
+            ['Status: 500 Internal Server Error', true, null],
+        ], $headers);
+        self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
+    }
+
+    public function testRouteRequestCleansUpTheBufferWhenRenderLayoutThrows(): void
+    {
+        $headers = [];
+
+        $frontController = (new FrontControllerBuilder())
+            ->withRequestParametersProvider(static fn (): ?array => ['late-boom'])
+            ->withRouteResolver(fn (string $route): ?Controller => $this->createLateThrowingController())
+            ->withHeadersSentChecker(static fn (): bool => false)
+            ->withHeaderEmitter(static function (
+                string $header,
+                bool $replace = true,
+                ?int $responseCode = null
+            ) use (&$headers): void {
+                $headers[] = [$header, $replace, $responseCode];
+            })
+            ->build();
+
+        file_put_contents(
+            $this->viewsDir . DIRECTORY_SEPARATOR . '500.php',
+            <<<'PHP'
+<?php
+echo '500 view:' . ($exception instanceof Throwable ? $exception->getMessage() : 'none');
+PHP
+        );
+
+        ob_start();
+        $frontController->routeRequest();
+        $output = ob_get_clean();
+
+        self::assertStringContainsString('500 view:late-boom', (string) $output);
+        self::assertSame([
+            ['HTTP/1.1 500 Internal Server Error', true, 500],
+            ['Status: 500 Internal Server Error', true, null],
+        ], $headers);
+        self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
+    }
+
+    public function testRouteRequestFallsBackWhenThe500ViewIsMissingAndHeadersWereSent(): void
+    {
+        $headers = [];
+
+        $frontController = (new FrontControllerBuilder())
+            ->withRequestParametersProvider(static fn (): ?array => ['boom'])
+            ->withRouteResolver(fn (string $route): ?Controller => $this->createThrowingController())
+            ->withHeadersSentChecker(static fn (): bool => true)
             ->withHeaderEmitter(static function (
                 string $header,
                 bool $replace = true,
@@ -252,18 +233,47 @@ PHP;
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertSame('An internal error occurred. Please try again later.', trim((string)$output));
-        self::assertSame([
-            ['HTTP/1.1 500 Internal Server Error', true, 500],
-            ['Status: 500 Internal Server Error', true, null],
-        ], $headers);
+        self::assertSame('An internal error occurred. Please try again later.', trim((string) $output));
+        self::assertSame([], $headers);
+        self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
     }
 
     private function writeDefaultLayout(): void
     {
-        $str = "<?php\necho 'layout:' . \$this->getPageTitle() . '|params:' . 
-               implode(',', \$this->getRequestParameters());\n";
-        file_put_contents($this->layoutsDir . DIRECTORY_SEPARATOR . 'default.php', $str);
+        file_put_contents(
+            $this->layoutsDir . DIRECTORY_SEPARATOR . 'default.php',
+            <<<'PHP'
+<?php
+echo 'layout:' . $this->getPageTitle() . '|params:' .
+    implode(',', $this->getRequestParameters());
+PHP
+        );
+    }
+
+    private function createThrowingController(): Controller
+    {
+        return new class extends Controller
+        {
+            public function execute(): void
+            {
+                throw new RuntimeException('boom');
+            }
+        };
+    }
+
+    private function createLateThrowingController(): Controller
+    {
+        return new class extends Controller
+        {
+            public function execute(): void
+            {
+            }
+
+            public function renderLayout(): void
+            {
+                throw new RuntimeException('late-boom');
+            }
+        };
     }
 
     private function createTempDirectory(): string
@@ -312,85 +322,6 @@ PHP;
 
     private function restoreServerVariables(array $server): void
     {
-        if($server !== [])
-        {
-            $_SERVER = $server;
-        }
-    }
-
-    private array $serverBackup = [];
-}
-
-final class FrontControllerProbe extends FrontController
-{
-    public function readRequestParameters(): ?array
-    {
-        return parent::getRequestParameters();
-    }
-
-    public function readResolvedController(string $route): ?Controller
-    {
-        return parent::resolveController($route);
-    }
-
-    public function render404(): void
-    {
-        parent::display404Page();
-    }
-
-    public function render500(?Throwable $e = null): void
-    {
-        parent::display500Page($e);
-    }
-}
-
-final class ControlledFrontController extends FrontController
-{
-    public function __construct(private ?array $requestParameters, private Controller $controller)
-    {
-    }
-
-    protected function getRequestParameters(): ?array
-    {
-        return $this->requestParameters;
-    }
-
-    protected function resolveController(string $route): ?Controller
-    {
-        return $this->controller;
-    }
-}
-
-final class ThrowingController extends Controller
-{
-    public function __construct(string $layoutFile)
-    {
-        parent::__construct();
-        $this->setLayout($layoutFile);
-    }
-
-    public function execute(): void
-    {
-        throw new RuntimeException('boom');
-    }
-}
-
-final class LateThrowingController extends Controller
-{
-    public function __construct(string $layoutFile)
-    {
-        parent::__construct();
-        $this->setLayout($layoutFile);
-    }
-
-    /** @noinspection PhpMissingParentCallCommonInspection */
-    public function execute(): void
-    {
-    }
-
-    /** @noinspection PhpMissingParentCallCommonInspection */
-    public function renderLayout(): void
-    {
-        throw new RuntimeException('late-boom');
+        $_SERVER = $server;
     }
 }

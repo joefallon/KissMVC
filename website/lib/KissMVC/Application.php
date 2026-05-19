@@ -23,24 +23,10 @@
 
 namespace KissMVC;
 
-// NOTE: This class relies on Composer's autoloader (PSR-4). The project's
-// bootstrap (for example tests/config/main.php or public/index.php) should
-// require vendor/autoload.php so classes under the KissMVC\ namespace are
-// autoloaded. Manual require_once calls were removed to follow modern PHP
-// practices and PSR-4 autoloading.
-
-use DateTimeZone;
-use Exception;
 use RuntimeException;
 
 /**
  * Lightweight application bootstrapper for KissMVC.
- *
- * Responsibilities:
- *  - Load application/test configuration files.
- *  - Provide a small static registry for config and objects.
- *  - Perform environment checks (SSL, timezone).
- *  - Dispatch the front controller to route requests.
  */
 class Application
 {
@@ -55,17 +41,11 @@ class Application
      * The file can either return an array or assign an array to $config.
      * New values are merged into the existing registry so later loads override
      * earlier keys.
-     *
-     * @param string $configFilePath Absolute or relative path to a PHP file.
-     *
-     * @throws RuntimeException if the file does not provide an array config.
      */
     public static function loadConfiguration(string $configFilePath): void
     {
-        // Avoid leaking $config from previous includes.
         unset($config);
 
-        // The included file may return an array or set $config.
         $returned = require $configFilePath;
 
         if(is_array($returned))
@@ -91,18 +71,15 @@ class Application
             self::$config = $newConfig;
         }
 
-        // Cleanup temporaries.
         unset($returned, $newConfig, $config);
     }
 
     /**
      * Get a value from the registry. Returns null when the key is missing.
      *
-     * @param string $registryItemName
-     *
      * @return mixed|null
      */
-    public static function getRegistryItem(string $registryItemName)
+    public static function getRegistryItem(string $registryItemName): mixed
     {
         return self::$config[$registryItemName] ?? null;
     }
@@ -110,10 +87,9 @@ class Application
     /**
      * Store a value in the registry under the given name.
      *
-     * @param string $registryItemName
-     * @param mixed  $registryItem
+     * @param mixed $registryItem
      */
-    public static function setRegistryItem(string $registryItemName, $registryItem): void
+    public static function setRegistryItem(string $registryItemName, mixed $registryItem): void
     {
         if(self::$config === null)
         {
@@ -124,148 +100,26 @@ class Application
     }
 
     /**
-     * Run app: perform checks and dispatch the front controller.
+     * Run the application.
      *
-     * This method now performs a sanity check to ensure the FrontController
-     * class is autoloadable. If not, it throws a helpful RuntimeException
-     * explaining that vendor/autoload.php must be required by the bootstrap.
+     * Existing callers may continue to pass a callable front controller factory.
+     * Tests can also pass a prepared ApplicationBuilder.
      */
-    public static function run(?callable $frontControllerFactory = null): void
+    public static function run(callable|ApplicationBuilder|null $frontControllerFactory = null): void
     {
-        self::checkSsl();
-        self::setTimeZone();
-
-        // Sanity check: ensure FrontController is available via autoload.
-        if(!class_exists(FrontController::class))
+        if($frontControllerFactory instanceof ApplicationBuilder)
         {
-            throw new RuntimeException(
-                'FrontController not found. Ensure vendor/autoload.php is required by '
-                . 'your bootstrap (run "composer install" and require autoload.php).'
-            );
+            $builder = $frontControllerFactory;
+        }
+        elseif($frontControllerFactory !== null)
+        {
+            $builder = new ApplicationBuilder()->withFrontControllerFactory($frontControllerFactory);
+        }
+        else
+        {
+            $builder = new ApplicationBuilder();
         }
 
-        $frontController = $frontControllerFactory !== null
-            ? $frontControllerFactory()
-            : new FrontController();
-        $frontController->routeRequest();
-    }
-
-    /* ---------------------------------------------------------------------
-     * Protected helpers
-     * --------------------------------------------------------------------*/
-
-    /**
-     * Redirect to HTTPS when config key 'ssl_required' is truthy.
-     *
-     * Uses several indicators to detect an HTTPS request. If a redirect is
-     * needed but headers were already sent, a warning is triggered instead of
-     * attempting to send headers.
-     */
-    protected static function checkSsl(): void
-    {
-        $config = self::$config ?? [];
-
-        if(empty($config['ssl_required']))
-        {
-            return; // SSL not required.
-        }
-
-        // Determine if the current request looks secure.
-        $isHttpsServerVar = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
-                            && $_SERVER['HTTPS'] !== '0';
-
-        $isPort443 = isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443;
-
-        $isForwardedProtoHttps = !empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
-                                 && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
-
-        $isHttps = $isHttpsServerVar || $isPort443 || $isForwardedProtoHttps;
-
-        if($isHttps)
-        {
-            return; // Already HTTPS, no redirect needed.
-        }
-
-        // Build host and request URI safely with fallbacks.
-        $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
-        $uri = $_SERVER['REQUEST_URI'] ?? '/';
-
-        $url = 'https://' . $host . $uri;
-
-        if(static::headersWereSent())
-        {
-            $msg = 'SSL required but headers already sent; cannot redirect to %s';
-            trigger_error(sprintf($msg, $url), E_USER_WARNING);
-
-            return;
-        }
-
-        static::redirectToHttps($url);
-    }
-
-    /**
-     * Set the PHP default timezone from config 'timezone' when provided.
-     * Invalid values trigger a notice and are ignored.
-     */
-    protected static function setTimeZone(): void
-    {
-        $timezone = self::$config['timezone'] ?? null;
-
-        if(!is_string($timezone) || $timezone === '')
-        {
-            return;
-        }
-
-        // Validate before setting; DateTimeZone will throw on invalid ids.
-        try
-        {
-            new DateTimeZone($timezone);
-            date_default_timezone_set($timezone);
-        }
-        catch(Exception $e)
-        {
-            trigger_error('Invalid timezone configured: ' . $timezone, E_USER_NOTICE);
-        }
-    }
-
-    /**
-     * Hook for tests to override header state checks.
-     */
-    protected static function headersWereSent(): bool
-    {
-        return headers_sent();
-    }
-
-    /**
-     * Hook for tests to capture emitted headers without sending real ones.
-     */
-    protected static function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
-    {
-        if($responseCode === null)
-        {
-            header($header, $replace);
-
-            return;
-        }
-
-        header($header, $replace, $responseCode);
-    }
-
-    /**
-     * Hook for tests to intercept HTTPS redirects without exiting.
-     */
-    protected static function redirectToHttps(string $url): void
-    {
-        // Permanent redirect to HTTPS.
-        static::emitHeader('Location: ' . $url, true, 301);
-        static::beforeExitFromRedirect($url);
-        exit;
-    }
-
-    /**
-     * Hook for tests to intercept the redirect flow before the hard exit.
-     */
-    protected static function beforeExitFromRedirect(string $url): void
-    {
+        $builder->build()->run();
     }
 }
