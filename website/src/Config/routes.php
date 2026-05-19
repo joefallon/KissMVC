@@ -15,8 +15,8 @@ use Controllers\PageWithParametersControllerFactory;
  * Design goals (KISS + Clean Code):
  *  - Small function doing one job: map a route string to a Controller.
  *  - Clear naming: route keys should be descriptive and match URL segments.
- *  - Explicit factories: each route points to a factory callable that
- *    returns a concrete Controller instance.
+ *  - Explicit factories: each route points to a factory class that returns a
+ *    concrete Controller instance.
  *
  * Conventions and tips for contributors:
  *  - Routes are one segment only. For e.g. '/admin-dashboard' the segment is
@@ -38,7 +38,7 @@ function routeToController(string $route): ?Controller
     // Normalize the incoming route string.
     $route =  strtolower(trim($route));
 
-    // Simple default behaviour: empty route maps to 'default'.
+    // Simple default behavior: empty route maps to 'default'.
     if($route === '')
     {
         // The default route must always exist in the $routes map below. In other frameworks

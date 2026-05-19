@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace KissMVC;
 
 /**
- * Tiny builder for constructing a FrontController with optional test seams.
+ * Optional convenience builder for constructing a FrontController with test seams.
  */
 final class FrontControllerBuilder
 {
@@ -33,44 +33,35 @@ final class FrontControllerBuilder
 
     public function __construct(?FrontControllerOptions $options = null)
     {
-        $this->options = $options !== null ? clone $options : new FrontControllerOptions();
-    }
-
-    public function __clone()
-    {
-        $this->options = clone $this->options;
+        $this->options = $options ?? new FrontControllerOptions();
     }
 
     public function withRequestParametersProvider(RequestParametersProviderInterface $requestParametersProvider): self
     {
-        $clone = clone $this;
-        $clone->options->requestParametersProvider = $requestParametersProvider;
+        $this->options->requestParametersProvider = $requestParametersProvider;
 
-        return $clone;
+        return $this;
     }
 
     public function withRouteResolver(RouteResolverInterface $routeResolver): self
     {
-        $clone = clone $this;
-        $clone->options->routeResolver = $routeResolver;
+        $this->options->routeResolver = $routeResolver;
 
-        return $clone;
+        return $this;
     }
 
     public function withHeadersSentChecker(HeadersSentCheckerInterface $headersSentChecker): self
     {
-        $clone = clone $this;
-        $clone->options->headersSentChecker = $headersSentChecker;
+        $this->options->headersSentChecker = $headersSentChecker;
 
-        return $clone;
+        return $this;
     }
 
     public function withHeaderEmitter(HeaderEmitterInterface $headerEmitter): self
     {
-        $clone = clone $this;
-        $clone->options->headerEmitter = $headerEmitter;
+        $this->options->headerEmitter = $headerEmitter;
 
-        return $clone;
+        return $this;
     }
 
     public function build(): FrontController

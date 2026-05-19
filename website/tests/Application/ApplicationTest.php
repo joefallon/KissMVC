@@ -5,7 +5,6 @@ namespace Tests\Application;
 
 use FilesystemIterator;
 use KissMVC\Application;
-use KissMVC\ApplicationBuilder;
 use KissMVC\ApplicationRunner;
 use KissMVC\ApplicationRunnerOptions;
 use Tests\Support\FixedHeadersSentChecker;
@@ -95,7 +94,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            (new ApplicationBuilder())->build()->setTimeZone();
+            (new ApplicationRunner())->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -112,7 +111,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            (new ApplicationBuilder())->build()->setTimeZone();
+            (new ApplicationRunner())->setTimeZone();
 
             self::assertSame('UTC', date_default_timezone_get());
         }
@@ -129,7 +128,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            (new ApplicationBuilder())->build()->setTimeZone();
+            (new ApplicationRunner())->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -146,7 +145,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            (new ApplicationBuilder())->build()->setTimeZone();
+            (new ApplicationRunner())->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -170,7 +169,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            (new ApplicationBuilder())->build()->setTimeZone();
+            (new ApplicationRunner())->setTimeZone();
 
             self::assertSame($originalTimezone, date_default_timezone_get());
         }
@@ -344,23 +343,25 @@ final class ApplicationTest extends TestCase
         $frontController = new RecordingFrontController();
 
         Application::setRegistryItem('ssl_required', false);
-        Application::run((new ApplicationBuilder())->withFrontControllerFactory(
-            new RecordingFrontControllerFactory($frontController)
-        ));
+
+        $options = new ApplicationRunnerOptions();
+        $options->frontControllerFactory = new RecordingFrontControllerFactory($frontController);
+
+        Application::run($options);
 
         self::assertTrue($frontController->wasRouted);
     }
 
-    public function testRunUsesAnInjectedApplicationBuilder(): void
+    public function testRunUsesInjectedApplicationRunnerOptions(): void
     {
         $frontController = new RecordingFrontController();
 
         Application::setRegistryItem('ssl_required', false);
-        $builder = (new ApplicationBuilder())->withFrontControllerFactory(
-            new RecordingFrontControllerFactory($frontController)
-        );
 
-        Application::run($builder);
+        $options = new ApplicationRunnerOptions();
+        $options->frontControllerFactory = new RecordingFrontControllerFactory($frontController);
+
+        (new ApplicationRunner($options))->run();
 
         self::assertTrue($frontController->wasRouted);
     }
@@ -410,12 +411,11 @@ PHP
     ): ApplicationRunner {
         $options = new ApplicationRunnerOptions();
         $options->frontControllerFactory = new RecordingFrontControllerFactory(new RecordingFrontController());
+        $options->headersSentChecker = new FixedHeadersSentChecker($headersSent);
+        $options->headerEmitter = $headerEmitter;
+        $options->redirectTerminator = $redirectTerminator;
 
-        return (new ApplicationBuilder($options))
-            ->withHeadersSentChecker(new FixedHeadersSentChecker($headersSent))
-            ->withHeaderEmitter($headerEmitter)
-            ->withRedirectTerminator($redirectTerminator)
-            ->build();
+        return new ApplicationRunner($options);
     }
 
     private function createTempDirectory(): string

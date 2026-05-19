@@ -7,7 +7,6 @@ use FilesystemIterator;
 use KissMVC\Application;
 use KissMVC\Controller;
 use KissMVC\FrontController;
-use KissMVC\FrontControllerBuilder;
 use KissMVC\FrontControllerOptions;
 use Tests\Support\FixedHeadersSentChecker;
 use Tests\Support\FixedRequestParametersProvider;
@@ -89,7 +88,7 @@ final class FrontControllerTest extends TestCase
         $options->headersSentChecker = new FixedHeadersSentChecker(false);
         $options->headerEmitter = $headers;
 
-        $frontController = new FrontControllerBuilder($options)->build();
+        $frontController = new FrontController($options);
 
         file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '404.php', <<<'PHP'
 <?php
@@ -110,11 +109,13 @@ PHP
     public function testRouteRequestSkips404HeaderEmissionWhenHeadersWereSent(): void
     {
         $headers = new RecordingHeaderEmitter();
+        $options = new FrontControllerOptions();
+        $options->requestParametersProvider = new FixedRequestParametersProvider(['missing-route']);
+        $options->routeResolver = new FixedRouteResolver(null);
+        $options->headersSentChecker = new FixedHeadersSentChecker(true);
+        $options->headerEmitter = $headers;
 
-        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['missing-route']))
-                                                         ->withRouteResolver(new FixedRouteResolver(null))
-                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(true))
-                                                         ->withHeaderEmitter($headers)->build();
+        $frontController = new FrontController($options);
 
         ob_start();
         $frontController->routeRequest();
@@ -127,11 +128,13 @@ PHP
     public function testRouteRequestDisplaysThe500ViewForControllerExceptions(): void
     {
         $headers = new RecordingHeaderEmitter();
+        $options = new FrontControllerOptions();
+        $options->requestParametersProvider = new FixedRequestParametersProvider(['boom']);
+        $options->routeResolver = new FixedRouteResolver($this->createThrowingController());
+        $options->headersSentChecker = new FixedHeadersSentChecker(false);
+        $options->headerEmitter = $headers;
 
-        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['boom']))
-                                                         ->withRouteResolver(new FixedRouteResolver($this->createThrowingController()))
-                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(false))
-                                                         ->withHeaderEmitter($headers)->build();
+        $frontController = new FrontController($options);
 
         file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', <<<'PHP'
 <?php
@@ -153,11 +156,13 @@ PHP
     public function testRouteRequestCleansUpTheBufferWhenRenderLayoutThrows(): void
     {
         $headers = new RecordingHeaderEmitter();
+        $options = new FrontControllerOptions();
+        $options->requestParametersProvider = new FixedRequestParametersProvider(['late-boom']);
+        $options->routeResolver = new FixedRouteResolver($this->createLateThrowingController());
+        $options->headersSentChecker = new FixedHeadersSentChecker(false);
+        $options->headerEmitter = $headers;
 
-        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['late-boom']))
-                                                         ->withRouteResolver(new FixedRouteResolver($this->createLateThrowingController()))
-                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(false))
-                                                         ->withHeaderEmitter($headers)->build();
+        $frontController = new FrontController($options);
 
         file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', <<<'PHP'
 <?php
@@ -178,11 +183,13 @@ PHP
     public function testRouteRequestFallsBackWhenThe500ViewIsMissingAndHeadersWereSent(): void
     {
         $headers = new RecordingHeaderEmitter();
+        $options = new FrontControllerOptions();
+        $options->requestParametersProvider = new FixedRequestParametersProvider(['boom']);
+        $options->routeResolver = new FixedRouteResolver($this->createThrowingController());
+        $options->headersSentChecker = new FixedHeadersSentChecker(true);
+        $options->headerEmitter = $headers;
 
-        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['boom']))
-                                                         ->withRouteResolver(new FixedRouteResolver($this->createThrowingController()))
-                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(true))
-                                                         ->withHeaderEmitter($headers)->build();
+        $frontController = new FrontController($options);
 
         ob_start();
         $frontController->routeRequest();

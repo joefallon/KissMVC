@@ -24,7 +24,7 @@
 namespace KissMVC;
 
 /**
- * Small builder for ApplicationRunner dependencies.
+ * Optional convenience builder for ApplicationRunner dependencies.
  */
 final class ApplicationBuilder
 {
@@ -32,44 +32,35 @@ final class ApplicationBuilder
 
     public function __construct(?ApplicationRunnerOptions $options = null)
     {
-        $this->options = $options !== null ? clone $options : new ApplicationRunnerOptions();
-    }
-
-    public function __clone()
-    {
-        $this->options = clone $this->options;
+        $this->options = $options ?? new ApplicationRunnerOptions();
     }
 
     public function withFrontControllerFactory(FrontControllerFactoryInterface $frontControllerFactory): self
     {
-        $clone = clone $this;
-        $clone->options->frontControllerFactory = $frontControllerFactory;
+        $this->options->frontControllerFactory = $frontControllerFactory;
 
-        return $clone;
+        return $this;
     }
 
     public function withHeadersSentChecker(HeadersSentCheckerInterface $headersSentChecker): self
     {
-        $clone = clone $this;
-        $clone->options->headersSentChecker = $headersSentChecker;
+        $this->options->headersSentChecker = $headersSentChecker;
 
-        return $clone;
+        return $this;
     }
 
     public function withHeaderEmitter(HeaderEmitterInterface $headerEmitter): self
     {
-        $clone = clone $this;
-        $clone->options->headerEmitter = $headerEmitter;
+        $this->options->headerEmitter = $headerEmitter;
 
-        return $clone;
+        return $this;
     }
 
     public function withRedirectTerminator(RedirectTerminatorInterface $redirectTerminator): self
     {
-        $clone = clone $this;
-        $clone->options->redirectTerminator = $redirectTerminator;
+        $this->options->redirectTerminator = $redirectTerminator;
 
-        return $clone;
+        return $this;
     }
 
     public function build(): ApplicationRunner

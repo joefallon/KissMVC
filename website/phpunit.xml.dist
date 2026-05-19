@@ -13,6 +13,10 @@
         </include>
         <exclude>
             <directory>vendor</directory>
+            <directory suffix="Builder.php">lib</directory>
+            <directory suffix="Factory.php">lib</directory>
+            <directory suffix="Builder.php">src</directory>
+            <directory suffix="Factory.php">src</directory>
             <directory>src/Views</directory>
             <directory>src/Layouts</directory>
             <directory>src/Partials</directory>

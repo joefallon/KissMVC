@@ -102,8 +102,17 @@ class Application
     /**
      * Run the application.
      */
-    public static function run(?ApplicationBuilder $applicationBuilder = null): void
+    public static function run(ApplicationRunnerOptions|ApplicationBuilder|null $options = null): void
     {
-        ($applicationBuilder ?? new ApplicationBuilder())->build()->run();
+        if($options instanceof ApplicationBuilder)
+        {
+            $runner = $options->build();
+            $runner->run();
+
+            return;
+        }
+
+        $runner = new ApplicationRunner($options);
+        $runner->run();
     }
 }
