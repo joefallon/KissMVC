@@ -70,9 +70,9 @@ else
 
 class FrontController
 {
-    private const DEFAULT_CONTROLLER = 'default';
-    private const HTTP_404_VIEW      = '404.php';
-    private const HTTP_500_VIEW      = '500.php';
+    private const string DEFAULT_CONTROLLER = 'default';
+    private const string HTTP_404_VIEW      = '404.php';
+    private const string HTTP_500_VIEW      = '500.php';
 
     /**
      * Route the current HTTP request to the appropriate controller and render.
@@ -92,17 +92,16 @@ class FrontController
     {
         $requestParameters = $this->getRequestParameters();
         $controller = null;
+        $bufferLevel = ob_get_level();
 
         if($requestParameters === null)
         {
-            $controller = function_exists('routeToController')
-                ? routeToController(self::DEFAULT_CONTROLLER)
-                : null;
+            $controller = $this->resolveController(self::DEFAULT_CONTROLLER);
         }
         else
         {
             $pageName = $requestParameters[0] ?? ''; // first segment
-            $controller = function_exists('routeToController') ? routeToController($pageName) : null;
+            $controller = $this->resolveController($pageName);
 
             // Remove the page name from the array and reindex.
             array_shift($requestParameters);
@@ -128,7 +127,10 @@ class FrontController
         catch(Throwable $e)
         {
             // Discard any partial output produced after we started buffering.
-            ob_end_clean();
+            if(ob_get_level() > $bufferLevel)
+            {
+                ob_end_clean();
+            }
 
             // Render a friendly 500 page and stop.
             $this->display500Page($e);
@@ -136,7 +138,7 @@ class FrontController
     }
 
     /* ------------------------------------------------------------------
-     * Private helpers
+     * Protected helpers
      * ------------------------------------------------------------------ */
 
     /**
@@ -144,7 +146,7 @@ class FrontController
      *
      * Returns null when there are no segments (root request).
      */
-    private function getRequestParameters(): ?array
+    protected function getRequestParameters(): ?array
     {
         $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
@@ -171,10 +173,21 @@ class FrontController
     }
 
     /**
+     * Resolve a route name to a controller using the legacy routeToController()
+     * function when it is available.
+     */
+    protected function resolveController(string $route): ?Controller
+    {
+        return function_exists('routeToController')
+            ? routeToController($route)
+            : null;
+    }
+
+    /**
      * Display the project's configured 404 page. Falls back to a minimal
      * message when the view file cannot be found or read.
      */
-    private function display404Page(): void
+    protected function display404Page(): void
     {
         $_SERVER['REDIRECT_STATUS'] = 404;
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
@@ -206,7 +219,7 @@ class FrontController
      * and otherwise prints a safe fallback. The throwable is optionally
      * accepted for logging or debug display by a custom 500 view.
      */
-    private function display500Page(?Throwable $e = null): void
+    protected function display500Page(?Throwable $e = null): void
     {
         $_SERVER['REDIRECT_STATUS'] = 500;
         $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
@@ -241,7 +254,7 @@ class FrontController
      * Split the request path into segments and strip query strings. Empty
      * segments are skipped.
      */
-    private function urlSegments(string $request): array
+    protected function urlSegments(string $request): array
     {
         $requestParams = explode('/', $request);
         $params = [];

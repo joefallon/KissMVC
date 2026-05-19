@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+namespace Tests\Bootstrap;
+
 use PHPUnit\Framework\TestCase;
 
 final class AutoloadTest extends TestCase

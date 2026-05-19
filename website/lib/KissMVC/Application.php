@@ -130,7 +130,7 @@ class Application
      * class is autoloadable. If not, it throws a helpful RuntimeException
      * explaining that vendor/autoload.php must be required by the bootstrap.
      */
-    public static function run(): void
+    public static function run(?callable $frontControllerFactory = null): void
     {
         self::checkSsl();
         self::setTimeZone();
@@ -144,7 +144,9 @@ class Application
             );
         }
 
-        $frontController = new FrontController();
+        $frontController = $frontControllerFactory !== null
+            ? $frontControllerFactory()
+            : new FrontController();
         $frontController->routeRequest();
     }
 
