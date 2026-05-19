@@ -1,10 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use Application\Controllers\IndexController;
+use Controllers\IndexController;
 
 /* @var $this IndexController */
-
 ?>
 <pre>
 
@@ -21,7 +20,6 @@ Main View:
         </a>
     </li>
 </ul>
-
 
 
 <?php $this->renderPartial('test.php', ['data' => 'View Partial Data']); ?>

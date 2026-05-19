@@ -2,25 +2,31 @@
     "name": "joefallon/kissmvc",
     "type": "project",
     "description": "KissMVC is a Keep-It-Simple-Straightforward (KISS) MVC framework.",
-    "keywords": [ "MVC", "model-view-controller" ],
+    "keywords": [
+        "MVC",
+        "model-view-controller"
+    ],
     "homepage": "https://github.com/joefallon/KissMVC",
     "license": "MIT",
     "authors": [
         {
-            "name":     "Joe Fallon",
-            "email":    "joseph.t.fallon@gmail.com",
+            "name": "Joe Fallon",
+            "email": "joseph.t.fallon@gmail.com",
             "homepage": "https://www.joefallon.net/"
         }
     ],
-    "require":     {
-        "php": ">=7.4"
+    "require": {
+        "php": ">=8.4"
     },
     "require-dev": {
     },
     "autoload": {
         "psr-4": {
             "KissMVC\\": "lib/KissMVC/",
-            "\\": "src/"
-        }
+            "Controllers\\": "src/Controllers/"
+        },
+        "classmap": [
+            "src/Bootstrapper.php"
+        ]
     }
 }

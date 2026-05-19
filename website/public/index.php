@@ -15,11 +15,9 @@ else
     ini_set('display_errors', '1');
 }
 
-define('BASE_PATH', realpath(__DIR__   . '/../'));
+define('BASE_PATH', realpath(__DIR__ . '/../'));
 const APP_PATH = BASE_PATH . '/src';
 
-require_once(BASE_PATH . '/lib/KissMVC/Application.php');
-require_once(BASE_PATH . '/src/Bootstrapper.php');
 require_once(BASE_PATH . '/vendor/autoload.php');
 
 Application::loadConfiguration(APP_PATH . '/Config/main.php');

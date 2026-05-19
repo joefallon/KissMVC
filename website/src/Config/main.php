@@ -51,7 +51,7 @@ $environment = defined('APPLICATION_ENV')
 $config = [];
 
 // Ensure the environment is always available in the config array.
-$config = ['environment'] ?? $environment;
+$config['environment'] = $environment;
 
 /**
  * Database settings

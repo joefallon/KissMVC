@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 
-/** @var $this PageWithParametersController */
-use Application\Controllers\PageWithParametersController;
+use Controllers\PageWithParametersController;
 
-?><pre><?php
+/** @var $this PageWithParametersController */
+?>
+<pre><?php
     $reqParams = $this->getRequestParameters();
 
     print_r($reqParams);
