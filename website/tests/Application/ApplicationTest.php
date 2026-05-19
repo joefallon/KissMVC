@@ -231,6 +231,46 @@ final class ApplicationTest extends TestCase
         }
     }
 
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckSslTriggersWarningWhenHeadersWereAlreadySent(): void
+    {
+        require_once __DIR__ . '/../Support/KissMvcNamespaceStubs.php';
+
+        $server = $this->withServerVariables([
+            'SERVER_NAME' => 'fallback.test',
+            'REQUEST_URI' => '/secure',
+        ]);
+
+        Application::setRegistryItem('ssl_required', true);
+        $errors = [];
+
+        set_error_handler(static function (int $severity, string $message) use (&$errors): bool {
+            $errors[] = [$severity, $message];
+
+            return true;
+        });
+
+        try
+        {
+            ApplicationTestHarness::invokeCheckSsl();
+        }
+        finally
+        {
+            restore_error_handler();
+            $this->restoreServerVariables($server);
+        }
+
+        self::assertNotEmpty($errors);
+        self::assertSame(E_USER_WARNING, $errors[0][0]);
+        self::assertStringContainsString(
+            'SSL required but headers already sent; cannot redirect to https://fallback.test/secure',
+            $errors[0][1]
+        );
+    }
+
     public function testRunUsesAnInjectedFrontControllerFactory(): void
     {
         $frontController = new TestFrontControllerForRun();

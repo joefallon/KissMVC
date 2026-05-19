@@ -20,6 +20,7 @@ final class FrontControllerTest extends TestCase
     private string $layoutsDir = '';
     private string $viewsDir = '';
 
+    /** @noinspection PhpMissingParentCallCommonInspection */
     protected function setUp(): void
     {
         self::resetRegistry();
@@ -36,6 +37,7 @@ final class FrontControllerTest extends TestCase
         Application::setRegistryItem('partials_directory', $this->viewsDir);
     }
 
+    /** @noinspection PhpMissingParentCallCommonInspection */
     protected function tearDown(): void
     {
         self::resetRegistry();
@@ -115,7 +117,7 @@ final class FrontControllerTest extends TestCase
             "<?php\necho '404 view:' . (\$_SERVER['REDIRECT_STATUS'] ?? '');\n");
 
         ob_start();
-        (new FrontController())->routeRequest();
+        new FrontController()->routeRequest();
         $output = ob_get_clean();
 
         self::assertStringContainsString('404 view:404', (string)$output);
@@ -139,7 +141,11 @@ final class FrontControllerTest extends TestCase
         $_SERVER['REQUEST_URI'] = '/boom';
         $_SERVER['SCRIPT_NAME'] = '/index.php';
 
-        $str = "<?php\n\$message = isset(\$exception) && \$exception instanceof Throwable ? \$exception->getMessage() : 'none';\necho '500 view:' . \$message;\n";
+        $str = <<<'PHP'
+<?php
+$message = isset($exception) && $exception instanceof Throwable ? $exception->getMessage() : 'none';
+echo '500 view:' . $message;
+PHP;
         file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', $str);
 
         $frontController = new ControlledFrontController(null, new ThrowingController('boom'));
@@ -149,6 +155,28 @@ final class FrontControllerTest extends TestCase
         $output = ob_get_clean();
 
         self::assertStringContainsString('500 view:boom', (string)$output);
+        self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
+    }
+
+    public function testRouteRequestCleansUpTheBufferWhenRenderLayoutThrows(): void
+    {
+        $this->backupServerVariables();
+        $_SERVER['REQUEST_URI'] = '/late-boom';
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+
+        $str = <<<'PHP'
+<?php
+echo '500 view:' . ($exception instanceof Throwable ? $exception->getMessage() : 'none');
+PHP;
+        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', $str);
+
+        $frontController = new ControlledFrontController(null, new LateThrowingController('late-boom'));
+
+        ob_start();
+        $frontController->routeRequest();
+        $output = ob_get_clean();
+
+        self::assertStringContainsString('500 view:late-boom', (string)$output);
         self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
     }
 
@@ -165,7 +193,8 @@ final class FrontControllerTest extends TestCase
 
     private function writeDefaultLayout(): void
     {
-        $str = "<?php\necho 'layout:' . \$this->getPageTitle() . '|params:' . implode(',', \$this->getRequestParameters());\n";
+        $str = "<?php\necho 'layout:' . \$this->getPageTitle() . '|params:' . 
+               implode(',', \$this->getRequestParameters());\n";
         file_put_contents($this->layoutsDir . DIRECTORY_SEPARATOR . 'default.php', $str);
     }
 
@@ -275,5 +304,25 @@ final class ThrowingController extends Controller
     public function execute(): void
     {
         throw new RuntimeException('boom');
+    }
+}
+
+final class LateThrowingController extends Controller
+{
+    public function __construct(string $layoutFile)
+    {
+        parent::__construct();
+        $this->setLayout($layoutFile);
+    }
+
+    /** @noinspection PhpMissingParentCallCommonInspection */
+    public function execute(): void
+    {
+    }
+
+    /** @noinspection PhpMissingParentCallCommonInspection */
+    public function renderLayout(): void
+    {
+        throw new RuntimeException('late-boom');
     }
 }
