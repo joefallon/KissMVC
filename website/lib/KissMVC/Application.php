@@ -101,25 +101,9 @@ class Application
 
     /**
      * Run the application.
-     *
-     * Existing callers may continue to pass a callable front controller factory.
-     * Tests can also pass a prepared ApplicationBuilder.
      */
-    public static function run(callable|ApplicationBuilder|null $frontControllerFactory = null): void
+    public static function run(?ApplicationBuilder $applicationBuilder = null): void
     {
-        if($frontControllerFactory instanceof ApplicationBuilder)
-        {
-            $builder = $frontControllerFactory;
-        }
-        elseif($frontControllerFactory !== null)
-        {
-            $builder = new ApplicationBuilder()->withFrontControllerFactory($frontControllerFactory);
-        }
-        else
-        {
-            $builder = new ApplicationBuilder();
-        }
-
-        $builder->build()->run();
+        ($applicationBuilder ?? new ApplicationBuilder())->build()->run();
     }
 }

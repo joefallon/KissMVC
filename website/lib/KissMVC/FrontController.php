@@ -24,7 +24,6 @@ declare(strict_types=1);
 
 namespace KissMVC;
 
-use Closure;
 use Throwable;
 
 /**
@@ -72,32 +71,29 @@ else
 class FrontController
 {
     private const string DEFAULT_CONTROLLER = 'default';
-    private const string HTTP_404_VIEW      = '404.php';
-    private const string HTTP_500_VIEW      = '500.php';
+    private const string HTTP_404_VIEW = '404.php';
+    private const string HTTP_500_VIEW = '500.php';
 
-    private ?Closure $requestParametersProvider = null;
-    private ?Closure $routeResolver = null;
-    private ?Closure $headersSentChecker = null;
-    private ?Closure $headerEmitter = null;
+    private RequestParametersProviderInterface $requestParametersProvider;
+    private RouteResolverInterface $routeResolver;
+    private HeadersSentCheckerInterface $headersSentChecker;
+    private HeaderEmitterInterface $headerEmitter;
 
-    public function __construct(
-        ?callable $requestParametersProvider = null,
-        ?callable $routeResolver = null,
-        ?callable $headersSentChecker = null,
-        ?callable $headerEmitter = null
-    ) {
-        $this->requestParametersProvider = $requestParametersProvider !== null
-            ? Closure::fromCallable($requestParametersProvider)
-            : null;
-        $this->routeResolver = $routeResolver !== null
-            ? Closure::fromCallable($routeResolver)
-            : null;
-        $this->headersSentChecker = $headersSentChecker !== null
-            ? Closure::fromCallable($headersSentChecker)
-            : null;
-        $this->headerEmitter = $headerEmitter !== null
-            ? Closure::fromCallable($headerEmitter)
-            : null;
+    public function __construct(?FrontControllerOptions $options = null)
+    {
+        $options ??= new FrontControllerOptions();
+
+        $this->requestParametersProvider = $options->requestParametersProvider
+                                           ?? new ServerRequestParametersProvider();
+
+        $this->routeResolver = $options->routeResolver
+                               ?? new FunctionRouteResolver();
+
+        $this->headersSentChecker = $options->headersSentChecker
+                                    ?? new NativeHeadersSentChecker();
+
+        $this->headerEmitter = $options->headerEmitter
+                               ?? new NativeHeaderEmitter();
     }
 
     /**
@@ -174,33 +170,7 @@ class FrontController
      */
     protected function getRequestParameters(): ?array
     {
-        if($this->requestParametersProvider !== null)
-        {
-            return ($this->requestParametersProvider)();
-        }
-
-        $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
-        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-        $scriptDir = $scriptName !== '' ? dirname($scriptName) : '';
-
-        // Remove script directory from the request path when needed.
-        if($scriptDir !== '' && $scriptDir !== '/')
-        {
-            $request = str_replace($scriptDir, '', $requestUri);
-        }
-        else
-        {
-            $request = $requestUri;
-        }
-
-        $request = trim((string)$request, '/');
-
-        if(strlen($request) > 0)
-        {
-            return $this->urlSegments($request);
-        }
-
-        return null;
+        return $this->requestParametersProvider->getRequestParameters();
     }
 
     /**
@@ -209,14 +179,7 @@ class FrontController
      */
     protected function resolveController(string $route): ?Controller
     {
-        if($this->routeResolver !== null)
-        {
-            return ($this->routeResolver)($route);
-        }
-
-        return function_exists('routeToController')
-            ? routeToController($route)
-            : null;
+        return $this->routeResolver->resolveRoute($route);
     }
 
     /**
@@ -267,8 +230,7 @@ class FrontController
         }
 
         $dir = Application::getRegistryItem('views_directory') ?? '';
-        $view = rtrim((string)$dir, DIRECTORY_SEPARATOR)
-                . DIRECTORY_SEPARATOR . self::HTTP_500_VIEW;
+        $view = rtrim((string)$dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . self::HTTP_500_VIEW;
 
         if(is_readable($view))
         {
@@ -287,40 +249,11 @@ class FrontController
     }
 
     /**
-     * Split the request path into segments and strip query strings. Empty
-     * segments are skipped.
-     */
-    protected function urlSegments(string $request): array
-    {
-        $requestParams = explode('/', $request);
-        $params = [];
-
-        foreach($requestParams as $param)
-        {
-            if($param === '')
-            {
-                continue; // skip empty segments
-            }
-
-            $arr = explode('?', $param, 2);
-
-            if(isset($arr[0]) && $arr[0] !== '')
-            {
-                $params[] = $arr[0];
-            }
-        }
-
-        return $params;
-    }
-
-    /**
      * Hook for tests and builders to customize header state checks.
      */
     protected function headersWereSent(): bool
     {
-        return $this->headersSentChecker !== null
-            ? (bool) ($this->headersSentChecker)()
-            : headers_sent();
+        return $this->headersSentChecker->headersSent();
     }
 
     /**
@@ -328,20 +261,6 @@ class FrontController
      */
     protected function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
     {
-        if($this->headerEmitter !== null)
-        {
-            ($this->headerEmitter)($header, $replace, $responseCode);
-
-            return;
-        }
-
-        if($responseCode === null)
-        {
-            header($header, $replace);
-
-            return;
-        }
-
-        header($header, $replace, $responseCode);
+        $this->headerEmitter->emit($header, $replace, $responseCode);
     }
 }

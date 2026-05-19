@@ -23,57 +23,57 @@
 
 namespace KissMVC;
 
-use Closure;
-
 /**
  * Small builder for ApplicationRunner dependencies.
  */
 final class ApplicationBuilder
 {
-    private ?Closure $frontControllerFactory = null;
-    private ?Closure $headersSentChecker = null;
-    private ?Closure $headerEmitter = null;
-    private ?Closure $redirectTerminator = null;
+    private ApplicationRunnerOptions $options;
 
-    public function withFrontControllerFactory(callable $frontControllerFactory): self
+    public function __construct(?ApplicationRunnerOptions $options = null)
+    {
+        $this->options = $options !== null ? clone $options : new ApplicationRunnerOptions();
+    }
+
+    public function __clone()
+    {
+        $this->options = clone $this->options;
+    }
+
+    public function withFrontControllerFactory(FrontControllerFactoryInterface $frontControllerFactory): self
     {
         $clone = clone $this;
-        $clone->frontControllerFactory = Closure::fromCallable($frontControllerFactory);
+        $clone->options->frontControllerFactory = $frontControllerFactory;
 
         return $clone;
     }
 
-    public function withHeadersSentChecker(callable $headersSentChecker): self
+    public function withHeadersSentChecker(HeadersSentCheckerInterface $headersSentChecker): self
     {
         $clone = clone $this;
-        $clone->headersSentChecker = Closure::fromCallable($headersSentChecker);
+        $clone->options->headersSentChecker = $headersSentChecker;
 
         return $clone;
     }
 
-    public function withHeaderEmitter(callable $headerEmitter): self
+    public function withHeaderEmitter(HeaderEmitterInterface $headerEmitter): self
     {
         $clone = clone $this;
-        $clone->headerEmitter = Closure::fromCallable($headerEmitter);
+        $clone->options->headerEmitter = $headerEmitter;
 
         return $clone;
     }
 
-    public function withRedirectTerminator(callable $redirectTerminator): self
+    public function withRedirectTerminator(RedirectTerminatorInterface $redirectTerminator): self
     {
         $clone = clone $this;
-        $clone->redirectTerminator = Closure::fromCallable($redirectTerminator);
+        $clone->options->redirectTerminator = $redirectTerminator;
 
         return $clone;
     }
 
     public function build(): ApplicationRunner
     {
-        return new ApplicationRunner(
-            $this->frontControllerFactory,
-            $this->headersSentChecker,
-            $this->headerEmitter,
-            $this->redirectTerminator
-        );
+        return new ApplicationRunner($this->options);
     }
 }

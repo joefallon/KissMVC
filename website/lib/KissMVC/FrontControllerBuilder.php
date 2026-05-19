@@ -24,57 +24,57 @@ declare(strict_types=1);
 
 namespace KissMVC;
 
-use Closure;
-
 /**
  * Tiny builder for constructing a FrontController with optional test seams.
  */
 final class FrontControllerBuilder
 {
-    private ?Closure $requestParametersProvider = null;
-    private ?Closure $routeResolver = null;
-    private ?Closure $headersSentChecker = null;
-    private ?Closure $headerEmitter = null;
+    private FrontControllerOptions $options;
 
-    public function withRequestParametersProvider(callable $requestParametersProvider): self
+    public function __construct(?FrontControllerOptions $options = null)
+    {
+        $this->options = $options !== null ? clone $options : new FrontControllerOptions();
+    }
+
+    public function __clone()
+    {
+        $this->options = clone $this->options;
+    }
+
+    public function withRequestParametersProvider(RequestParametersProviderInterface $requestParametersProvider): self
     {
         $clone = clone $this;
-        $clone->requestParametersProvider = Closure::fromCallable($requestParametersProvider);
+        $clone->options->requestParametersProvider = $requestParametersProvider;
 
         return $clone;
     }
 
-    public function withRouteResolver(callable $routeResolver): self
+    public function withRouteResolver(RouteResolverInterface $routeResolver): self
     {
         $clone = clone $this;
-        $clone->routeResolver = Closure::fromCallable($routeResolver);
+        $clone->options->routeResolver = $routeResolver;
 
         return $clone;
     }
 
-    public function withHeadersSentChecker(callable $headersSentChecker): self
+    public function withHeadersSentChecker(HeadersSentCheckerInterface $headersSentChecker): self
     {
         $clone = clone $this;
-        $clone->headersSentChecker = Closure::fromCallable($headersSentChecker);
+        $clone->options->headersSentChecker = $headersSentChecker;
 
         return $clone;
     }
 
-    public function withHeaderEmitter(callable $headerEmitter): self
+    public function withHeaderEmitter(HeaderEmitterInterface $headerEmitter): self
     {
         $clone = clone $this;
-        $clone->headerEmitter = Closure::fromCallable($headerEmitter);
+        $clone->options->headerEmitter = $headerEmitter;
 
         return $clone;
     }
 
     public function build(): FrontController
     {
-        return new FrontController(
-            $this->requestParametersProvider,
-            $this->routeResolver,
-            $this->headersSentChecker,
-            $this->headerEmitter
-        );
+        return new FrontController($this->options);
     }
 }

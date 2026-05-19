@@ -8,6 +8,11 @@ use KissMVC\Application;
 use KissMVC\Controller;
 use KissMVC\FrontController;
 use KissMVC\FrontControllerBuilder;
+use KissMVC\FrontControllerOptions;
+use Tests\Support\FixedHeadersSentChecker;
+use Tests\Support\FixedRequestParametersProvider;
+use Tests\Support\FixedRouteResolver;
+use Tests\Support\RecordingHeaderEmitter;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -57,7 +62,7 @@ final class FrontControllerTest extends TestCase
         (new FrontController())->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('layout:Index|params:', (string) $output);
+        self::assertStringContainsString('layout:Index|params:', (string)$output);
     }
 
     public function testRouteRequestPassesRemainingParametersToThePageWithParametersController(): void
@@ -72,29 +77,21 @@ final class FrontControllerTest extends TestCase
         (new FrontController())->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('layout:Page with Parameters|params:abc,123,xyz', (string) $output);
+        self::assertStringContainsString('layout:Page with Parameters|params:abc,123,xyz', (string)$output);
     }
 
     public function testRouteRequestDisplaysThe404ViewForUnknownRoutes(): void
     {
-        $headers = [];
+        $headers = new RecordingHeaderEmitter();
+        $options = new FrontControllerOptions();
+        $options->requestParametersProvider = new FixedRequestParametersProvider(['missing-route']);
+        $options->routeResolver = new FixedRouteResolver(null);
+        $options->headersSentChecker = new FixedHeadersSentChecker(false);
+        $options->headerEmitter = $headers;
 
-        $frontController = (new FrontControllerBuilder())
-            ->withRequestParametersProvider(static fn (): ?array => ['missing-route'])
-            ->withRouteResolver(static fn (string $route): ?Controller => null)
-            ->withHeadersSentChecker(static fn (): bool => false)
-            ->withHeaderEmitter(static function (
-                string $header,
-                bool $replace = true,
-                ?int $responseCode = null
-            ) use (&$headers): void {
-                $headers[] = [$header, $replace, $responseCode];
-            })
-            ->build();
+        $frontController = new FrontControllerBuilder($options)->build();
 
-        file_put_contents(
-            $this->viewsDir . DIRECTORY_SEPARATOR . '404.php',
-            <<<'PHP'
+        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '404.php', <<<'PHP'
 <?php
 echo '404 view:' . ($_SERVER['REDIRECT_STATUS'] ?? '');
 PHP
@@ -104,59 +101,39 @@ PHP
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('404 view:404', (string) $output);
-        self::assertSame([
-            ['HTTP/1.1 404 Not Found', true, 404],
-            ['Status: 404 Not Found', true, null],
-        ], $headers);
+        self::assertStringContainsString('404 view:404', (string)$output);
+        self::assertSame([['HTTP/1.1 404 Not Found', true, 404], ['Status: 404 Not Found', true, null],],
+            $headers->headers);
         self::assertSame(404, $_SERVER['REDIRECT_STATUS']);
     }
 
     public function testRouteRequestSkips404HeaderEmissionWhenHeadersWereSent(): void
     {
-        $headers = [];
+        $headers = new RecordingHeaderEmitter();
 
-        $frontController = (new FrontControllerBuilder())
-            ->withRequestParametersProvider(static fn (): ?array => ['missing-route'])
-            ->withRouteResolver(static fn (string $route): ?Controller => null)
-            ->withHeadersSentChecker(static fn (): bool => true)
-            ->withHeaderEmitter(static function (
-                string $header,
-                bool $replace = true,
-                ?int $responseCode = null
-            ) use (&$headers): void {
-                $headers[] = [$header, $replace, $responseCode];
-            })
-            ->build();
+        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['missing-route']))
+                                                         ->withRouteResolver(new FixedRouteResolver(null))
+                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(true))
+                                                         ->withHeaderEmitter($headers)->build();
 
         ob_start();
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertSame('404 Not Found', trim((string) $output));
-        self::assertSame([], $headers);
+        self::assertSame('404 Not Found', trim((string)$output));
+        self::assertSame([], $headers->headers);
     }
 
     public function testRouteRequestDisplaysThe500ViewForControllerExceptions(): void
     {
-        $headers = [];
+        $headers = new RecordingHeaderEmitter();
 
-        $frontController = (new FrontControllerBuilder())
-            ->withRequestParametersProvider(static fn (): ?array => ['boom'])
-            ->withRouteResolver(fn (string $route): ?Controller => $this->createThrowingController())
-            ->withHeadersSentChecker(static fn (): bool => false)
-            ->withHeaderEmitter(static function (
-                string $header,
-                bool $replace = true,
-                ?int $responseCode = null
-            ) use (&$headers): void {
-                $headers[] = [$header, $replace, $responseCode];
-            })
-            ->build();
+        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['boom']))
+                                                         ->withRouteResolver(new FixedRouteResolver($this->createThrowingController()))
+                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(false))
+                                                         ->withHeaderEmitter($headers)->build();
 
-        file_put_contents(
-            $this->viewsDir . DIRECTORY_SEPARATOR . '500.php',
-            <<<'PHP'
+        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', <<<'PHP'
 <?php
 $message = isset($exception) && $exception instanceof Throwable ? $exception->getMessage() : 'none';
 echo '500 view:' . $message;
@@ -167,34 +144,22 @@ PHP
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('500 view:boom', (string) $output);
-        self::assertSame([
-            ['HTTP/1.1 500 Internal Server Error', true, 500],
-            ['Status: 500 Internal Server Error', true, null],
-        ], $headers);
+        self::assertStringContainsString('500 view:boom', (string)$output);
+        self::assertSame([['HTTP/1.1 500 Internal Server Error', true, 500],
+                          ['Status: 500 Internal Server Error', true, null],], $headers->headers);
         self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
     }
 
     public function testRouteRequestCleansUpTheBufferWhenRenderLayoutThrows(): void
     {
-        $headers = [];
+        $headers = new RecordingHeaderEmitter();
 
-        $frontController = (new FrontControllerBuilder())
-            ->withRequestParametersProvider(static fn (): ?array => ['late-boom'])
-            ->withRouteResolver(fn (string $route): ?Controller => $this->createLateThrowingController())
-            ->withHeadersSentChecker(static fn (): bool => false)
-            ->withHeaderEmitter(static function (
-                string $header,
-                bool $replace = true,
-                ?int $responseCode = null
-            ) use (&$headers): void {
-                $headers[] = [$header, $replace, $responseCode];
-            })
-            ->build();
+        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['late-boom']))
+                                                         ->withRouteResolver(new FixedRouteResolver($this->createLateThrowingController()))
+                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(false))
+                                                         ->withHeaderEmitter($headers)->build();
 
-        file_put_contents(
-            $this->viewsDir . DIRECTORY_SEPARATOR . '500.php',
-            <<<'PHP'
+        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '500.php', <<<'PHP'
 <?php
 echo '500 view:' . ($exception instanceof Throwable ? $exception->getMessage() : 'none');
 PHP
@@ -204,45 +169,53 @@ PHP
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertStringContainsString('500 view:late-boom', (string) $output);
-        self::assertSame([
-            ['HTTP/1.1 500 Internal Server Error', true, 500],
-            ['Status: 500 Internal Server Error', true, null],
-        ], $headers);
+        self::assertStringContainsString('500 view:late-boom', (string)$output);
+        self::assertSame([['HTTP/1.1 500 Internal Server Error', true, 500],
+                          ['Status: 500 Internal Server Error', true, null],], $headers->headers);
         self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
     }
 
     public function testRouteRequestFallsBackWhenThe500ViewIsMissingAndHeadersWereSent(): void
     {
-        $headers = [];
+        $headers = new RecordingHeaderEmitter();
 
-        $frontController = (new FrontControllerBuilder())
-            ->withRequestParametersProvider(static fn (): ?array => ['boom'])
-            ->withRouteResolver(fn (string $route): ?Controller => $this->createThrowingController())
-            ->withHeadersSentChecker(static fn (): bool => true)
-            ->withHeaderEmitter(static function (
-                string $header,
-                bool $replace = true,
-                ?int $responseCode = null
-            ) use (&$headers): void {
-                $headers[] = [$header, $replace, $responseCode];
-            })
-            ->build();
+        $frontController = (new FrontControllerBuilder())->withRequestParametersProvider(new FixedRequestParametersProvider(['boom']))
+                                                         ->withRouteResolver(new FixedRouteResolver($this->createThrowingController()))
+                                                         ->withHeadersSentChecker(new FixedHeadersSentChecker(true))
+                                                         ->withHeaderEmitter($headers)->build();
 
         ob_start();
         $frontController->routeRequest();
         $output = ob_get_clean();
 
-        self::assertSame('An internal error occurred. Please try again later.', trim((string) $output));
-        self::assertSame([], $headers);
+        self::assertSame('An internal error occurred. Please try again later.', trim((string)$output));
+        self::assertSame([], $headers->headers);
         self::assertSame(500, $_SERVER['REDIRECT_STATUS']);
+    }
+
+    public function testRouteRequestUsesTheDefaultHeaderCollaboratorsFor404Responses(): void
+    {
+        $this->backupServerVariables();
+        $_SERVER['REQUEST_URI'] = '/missing-route';
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+
+        file_put_contents($this->viewsDir . DIRECTORY_SEPARATOR . '404.php', <<<'PHP'
+<?php
+echo '404 view:' . ($_SERVER['REDIRECT_STATUS'] ?? '');
+PHP
+        );
+
+        ob_start();
+        (new FrontController())->routeRequest();
+        $output = ob_get_clean();
+
+        self::assertStringContainsString('404 view:404', (string)$output);
+        self::assertSame(404, $_SERVER['REDIRECT_STATUS']);
     }
 
     private function writeDefaultLayout(): void
     {
-        file_put_contents(
-            $this->layoutsDir . DIRECTORY_SEPARATOR . 'default.php',
-            <<<'PHP'
+        file_put_contents($this->layoutsDir . DIRECTORY_SEPARATOR . 'default.php', <<<'PHP'
 <?php
 echo 'layout:' . $this->getPageTitle() . '|params:' .
     implode(',', $this->getRequestParameters());
@@ -252,8 +225,7 @@ PHP
 
     private function createThrowingController(): Controller
     {
-        return new class extends Controller
-        {
+        return new class extends Controller {
             public function execute(): void
             {
                 throw new RuntimeException('boom');
@@ -263,8 +235,7 @@ PHP
 
     private function createLateThrowingController(): Controller
     {
-        return new class extends Controller
-        {
+        return new class extends Controller {
             public function execute(): void
             {
             }

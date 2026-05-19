@@ -6,8 +6,13 @@ namespace Tests\Application;
 use FilesystemIterator;
 use KissMVC\Application;
 use KissMVC\ApplicationBuilder;
-use KissMVC\FrontController;
 use KissMVC\ApplicationRunner;
+use KissMVC\ApplicationRunnerOptions;
+use Tests\Support\FixedHeadersSentChecker;
+use Tests\Support\RecordingFrontController;
+use Tests\Support\RecordingFrontControllerFactory;
+use Tests\Support\RecordingHeaderEmitter;
+use Tests\Support\RecordingRedirectTerminator;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
@@ -183,16 +188,16 @@ final class ApplicationTest extends TestCase
     public function testCheckSslReturnsWithoutRedirectWhenSslIsNotRequired(): void
     {
         $server = $this->withServerVariables([]);
-        $headers = [];
-        $redirects = [];
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
         Application::setRegistryItem('ssl_required', false);
 
         try
         {
-            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
+            $this->createApplicationRunner(false, $headerEmitter, $redirectTerminator)->checkSsl();
 
-            self::assertSame([], $headers);
-            self::assertSame([], $redirects);
+            self::assertSame([], $headerEmitter->headers);
+            self::assertSame([], $redirectTerminator->urls);
         }
         finally
         {
@@ -207,16 +212,16 @@ final class ApplicationTest extends TestCase
             'HTTP_HOST' => 'example.test',
             'REQUEST_URI' => '/secure',
         ]);
-        $headers = [];
-        $redirects = [];
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
         Application::setRegistryItem('ssl_required', true);
 
         try
         {
-            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
+            $this->createApplicationRunner(false, $headerEmitter, $redirectTerminator)->checkSsl();
 
-            self::assertSame([], $headers);
-            self::assertSame([], $redirects);
+            self::assertSame([], $headerEmitter->headers);
+            self::assertSame([], $redirectTerminator->urls);
         }
         finally
         {
@@ -231,16 +236,16 @@ final class ApplicationTest extends TestCase
             'HTTP_HOST' => 'example.test',
             'REQUEST_URI' => '/secure',
         ]);
-        $headers = [];
-        $redirects = [];
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
         Application::setRegistryItem('ssl_required', true);
 
         try
         {
-            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
+            $this->createApplicationRunner(false, $headerEmitter, $redirectTerminator)->checkSsl();
 
-            self::assertSame([], $headers);
-            self::assertSame([], $redirects);
+            self::assertSame([], $headerEmitter->headers);
+            self::assertSame([], $redirectTerminator->urls);
         }
         finally
         {
@@ -255,16 +260,16 @@ final class ApplicationTest extends TestCase
             'HTTP_HOST' => 'example.test',
             'REQUEST_URI' => '/secure',
         ]);
-        $headers = [];
-        $redirects = [];
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
         Application::setRegistryItem('ssl_required', true);
 
         try
         {
-            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
+            $this->createApplicationRunner(false, $headerEmitter, $redirectTerminator)->checkSsl();
 
-            self::assertSame([], $headers);
-            self::assertSame([], $redirects);
+            self::assertSame([], $headerEmitter->headers);
+            self::assertSame([], $redirectTerminator->urls);
         }
         finally
         {
@@ -278,18 +283,18 @@ final class ApplicationTest extends TestCase
             'SERVER_NAME' => 'fallback.test',
             'REQUEST_URI' => '/secure',
         ]);
-        $headers = [];
-        $redirects = [];
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
         Application::setRegistryItem('ssl_required', true);
 
         try
         {
-            $this->createApplicationRunner(false, $headers, $redirects)->checkSsl();
+            $this->createApplicationRunner(false, $headerEmitter, $redirectTerminator)->checkSsl();
 
             self::assertSame([
                 ['Location: https://fallback.test/secure', true, 301],
-            ], $headers);
-            self::assertSame(['https://fallback.test/secure'], $redirects);
+            ], $headerEmitter->headers);
+            self::assertSame(['https://fallback.test/secure'], $redirectTerminator->urls);
         }
         finally
         {
@@ -303,8 +308,8 @@ final class ApplicationTest extends TestCase
             'SERVER_NAME' => 'fallback.test',
             'REQUEST_URI' => '/secure',
         ]);
-        $headers = [];
-        $redirects = [];
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
         Application::setRegistryItem('ssl_required', true);
         $errors = [];
 
@@ -316,7 +321,7 @@ final class ApplicationTest extends TestCase
 
         try
         {
-            $this->createApplicationRunner(true, $headers, $redirects)->checkSsl();
+            $this->createApplicationRunner(true, $headerEmitter, $redirectTerminator)->checkSsl();
         }
         finally
         {
@@ -330,43 +335,29 @@ final class ApplicationTest extends TestCase
             'SSL required but headers already sent; cannot redirect to https://fallback.test/secure',
             $errors[0][1]
         );
-        self::assertSame([], $headers);
-        self::assertSame([], $redirects);
+        self::assertSame([], $headerEmitter->headers);
+        self::assertSame([], $redirectTerminator->urls);
     }
 
     public function testRunUsesAnInjectedFrontControllerFactory(): void
     {
-        $frontController = new class extends FrontController
-        {
-            public bool $wasRouted = false;
-
-            public function routeRequest(): void
-            {
-                $this->wasRouted = true;
-            }
-        };
+        $frontController = new RecordingFrontController();
 
         Application::setRegistryItem('ssl_required', false);
-        Application::run(static fn (): FrontController => $frontController);
+        Application::run((new ApplicationBuilder())->withFrontControllerFactory(
+            new RecordingFrontControllerFactory($frontController)
+        ));
 
         self::assertTrue($frontController->wasRouted);
     }
 
     public function testRunUsesAnInjectedApplicationBuilder(): void
     {
-        $frontController = new class extends FrontController
-        {
-            public bool $wasRouted = false;
-
-            public function routeRequest(): void
-            {
-                $this->wasRouted = true;
-            }
-        };
+        $frontController = new RecordingFrontController();
 
         Application::setRegistryItem('ssl_required', false);
         $builder = (new ApplicationBuilder())->withFrontControllerFactory(
-            static fn (): FrontController => $frontController
+            new RecordingFrontControllerFactory($frontController)
         );
 
         Application::run($builder);
@@ -414,21 +405,16 @@ PHP
 
     private function createApplicationRunner(
         bool $headersSent,
-        array &$headers,
-        array &$redirects
+        RecordingHeaderEmitter $headerEmitter,
+        RecordingRedirectTerminator $redirectTerminator
     ): ApplicationRunner {
-        return (new ApplicationBuilder())
-            ->withHeadersSentChecker(static fn (): bool => $headersSent)
-            ->withHeaderEmitter(static function (
-                string $header,
-                bool $replace = true,
-                ?int $responseCode = null
-            ) use (&$headers): void {
-                $headers[] = [$header, $replace, $responseCode];
-            })
-            ->withRedirectTerminator(static function (string $url) use (&$redirects): void {
-                $redirects[] = $url;
-            })
+        $options = new ApplicationRunnerOptions();
+        $options->frontControllerFactory = new RecordingFrontControllerFactory(new RecordingFrontController());
+
+        return (new ApplicationBuilder($options))
+            ->withHeadersSentChecker(new FixedHeadersSentChecker($headersSent))
+            ->withHeaderEmitter($headerEmitter)
+            ->withRedirectTerminator($redirectTerminator)
             ->build();
     }
 

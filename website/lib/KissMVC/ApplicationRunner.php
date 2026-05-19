@@ -23,7 +23,6 @@
 
 namespace KissMVC;
 
-use Closure;
 use DateTimeZone;
 use Exception;
 use RuntimeException;
@@ -33,36 +32,26 @@ use RuntimeException;
  */
 final class ApplicationRunner
 {
-    private ?Closure $frontControllerFactory;
-    private Closure $headersSentChecker;
-    private Closure $headerEmitter;
-    private Closure $redirectTerminator;
+    private FrontControllerFactoryInterface $frontControllerFactory;
+    private HeadersSentCheckerInterface $headersSentChecker;
+    private HeaderEmitterInterface $headerEmitter;
+    private RedirectTerminatorInterface $redirectTerminator;
 
-    public function __construct(
-        ?Closure $frontControllerFactory = null,
-        ?Closure $headersSentChecker = null,
-        ?Closure $headerEmitter = null,
-        ?Closure $redirectTerminator = null
-    ) {
-        $this->frontControllerFactory = $frontControllerFactory;
-        $this->headersSentChecker = $headersSentChecker ?? static fn (): bool => headers_sent();
-        $this->headerEmitter = $headerEmitter ?? static function (
-            string $header,
-            bool $replace = true,
-            ?int $responseCode = null
-        ): void {
-            if($responseCode === null)
-            {
-                header($header, $replace);
+    public function __construct(?ApplicationRunnerOptions $options = null)
+    {
+        $options ??= new ApplicationRunnerOptions();
 
-                return;
-            }
+        $this->frontControllerFactory = $options->frontControllerFactory
+                                        ?? new DefaultFrontControllerFactory();
 
-            header($header, $replace, $responseCode);
-        };
-        $this->redirectTerminator = $redirectTerminator ?? static function (string $url): void {
-            exit;
-        };
+        $this->headersSentChecker = $options->headersSentChecker
+                                    ?? new NativeHeadersSentChecker();
+
+        $this->headerEmitter = $options->headerEmitter
+                               ?? new NativeHeaderEmitter();
+
+        $this->redirectTerminator = $options->redirectTerminator
+                                    ?? new ExitRedirectTerminator();
     }
 
     public function run(): void
@@ -78,9 +67,7 @@ final class ApplicationRunner
             );
         }
 
-        $frontController = $this->frontControllerFactory !== null
-            ? ($this->frontControllerFactory)()
-            : new FrontController();
+        $frontController = $this->frontControllerFactory->create();
         $frontController->routeRequest();
     }
 
@@ -95,7 +82,9 @@ final class ApplicationRunner
 
         $isHttpsServerVar = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
                             && $_SERVER['HTTPS'] !== '0';
+
         $isPort443 = isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443;
+
         $isForwardedProtoHttps = !empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
                                  && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
 
@@ -142,16 +131,16 @@ final class ApplicationRunner
 
     private function headersWereSent(): bool
     {
-        return (bool) ($this->headersSentChecker)();
+        return $this->headersSentChecker->headersSent();
     }
 
     private function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
     {
-        ($this->headerEmitter)($header, $replace, $responseCode);
+        $this->headerEmitter->emit($header, $replace, $responseCode);
     }
 
     private function redirectToHttps(string $url): void
     {
-        ($this->redirectTerminator)($url);
+        $this->redirectTerminator->terminate($url);
     }
 }
