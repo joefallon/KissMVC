@@ -52,16 +52,24 @@ final class ApplicationRunnerAcceptanceTest extends TestCase
     public function testKMVC005S002RunningTheApplicationAppliesAConfiguredTimezone(): void
     {
         $frontController = new RecordingFrontController();
+        $originalTimezone = date_default_timezone_get();
 
-        Application::setRegistryItem('timezone', 'UTC');
+        Application::setRegistryItem('timezone', 'America/Los_Angeles');
 
-        $this->runApplication([
-            'REQUEST_URI' => '/',
-            'SCRIPT_NAME' => '/index.php',
-        ], false, false, null, $frontController);
+        try
+        {
+            $this->runApplication([
+                'REQUEST_URI' => '/',
+                'SCRIPT_NAME' => '/index.php',
+            ], false, false, null, $frontController);
 
-        self::assertSame('UTC', date_default_timezone_get());
-        self::assertTrue($frontController->wasRouted);
+            self::assertSame('America/Los_Angeles', date_default_timezone_get());
+            self::assertTrue($frontController->wasRouted);
+        }
+        finally
+        {
+            date_default_timezone_set($originalTimezone);
+        }
     }
 
     /** KMVC-005-S003 */
@@ -137,6 +145,51 @@ final class ApplicationRunnerAcceptanceTest extends TestCase
         self::assertSame(['https://example.test/secure'], $redirectTerminator->urls);
     }
 
+    // Mutation-hardening variant of KMVC-005-S005.
+    /** KMVC-005-S005 */
+    public function testKMVC005S005WhenSslIsRequiredAForwardedProtoOfHttpsIsTreatedCaseInsensitively(): void
+    {
+        $frontController = new RecordingFrontController();
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
+
+        $this->runApplication([
+            'HTTPS' => null,
+            'HTTP_X_FORWARDED_PROTO' => 'HTTPS',
+            'SERVER_PORT' => null,
+            'HTTP_HOST' => 'example.test',
+            'REQUEST_URI' => '/secure',
+        ], true, false, null, $frontController, $headerEmitter, $redirectTerminator);
+
+        self::assertTrue($frontController->wasRouted);
+        self::assertSame([], $headerEmitter->headers);
+        self::assertSame([], $redirectTerminator->urls);
+    }
+
+    // Mutation-hardening variant of KMVC-005-S006.
+    /** KMVC-005-S006 */
+    public function testKMVC005S006WhenSslIsRequiredHostHeaderTakesPrecedenceOverServerNameForRedirects(): void
+    {
+        $frontController = new RecordingFrontController();
+        $headerEmitter = new RecordingHeaderEmitter();
+        $redirectTerminator = new RecordingRedirectTerminator();
+
+        $this->runApplication([
+            'HTTPS' => null,
+            'HTTP_X_FORWARDED_PROTO' => null,
+            'SERVER_PORT' => null,
+            'HTTP_HOST' => 'host-header.test',
+            'SERVER_NAME' => 'server-name.test',
+            'REQUEST_URI' => '/secure',
+        ], true, false, null, $frontController, $headerEmitter, $redirectTerminator);
+
+        self::assertSame(
+            [['Location: https://host-header.test/secure', true, 301]],
+            $headerEmitter->headers
+        );
+        self::assertSame(['https://host-header.test/secure'], $redirectTerminator->urls);
+    }
+
     /** KMVC-005-S007 */
     public function testKMVC005S007WhenHeadersWereAlreadySentSslRedirectionCannotBePerformed(): void
     {
@@ -153,13 +206,13 @@ final class ApplicationRunnerAcceptanceTest extends TestCase
 
         try
         {
-        $this->runApplication([
-            'HTTPS' => null,
-            'HTTP_X_FORWARDED_PROTO' => null,
-            'SERVER_PORT' => null,
-            'HTTP_HOST' => 'example.test',
-            'REQUEST_URI' => '/secure',
-        ], true, true, null, $frontController, $headerEmitter, $redirectTerminator);
+            $this->runApplication([
+                'HTTPS' => null,
+                'HTTP_X_FORWARDED_PROTO' => null,
+                'SERVER_PORT' => null,
+                'HTTP_HOST' => 'example.test',
+                'REQUEST_URI' => '/secure',
+            ], true, true, null, $frontController, $headerEmitter, $redirectTerminator);
         }
         finally
         {
@@ -203,7 +256,7 @@ final class ApplicationRunnerAcceptanceTest extends TestCase
         self::assertTrue($frontController->wasRouted);
         self::assertNotEmpty($errors);
         self::assertSame(E_USER_NOTICE, $errors[0][0]);
-        self::assertStringContainsString('Invalid timezone configured', $errors[0][1]);
+        self::assertSame('Invalid timezone configured: not-a-real-timezone', $errors[0][1]);
     }
 
     private function runApplication(
