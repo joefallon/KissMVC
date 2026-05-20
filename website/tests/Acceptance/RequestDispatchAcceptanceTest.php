@@ -91,6 +91,31 @@ final class RequestDispatchAcceptanceTest extends TestCase
         self::assertStringNotContainsString('ignored=value', $output);
     }
 
+    /** Verifies FrontController honors an injected request-parameters provider. */
+    public function testRouteRequestHonorsAnInjectedRequestParametersProvider(): void
+    {
+        $headers = new RecordingHeaderEmitter();
+        $options = new FrontControllerOptions();
+        $options->requestParametersProvider = new FixedRequestParametersProvider(['custom-route', 'alpha', 'beta']);
+        $options->headersSentChecker = new FixedHeadersSentChecker(false);
+        $options->headerEmitter = $headers;
+
+        $output = $this->runRouteRequest([
+            'REQUEST_URI' => '/page-with-parameters/alpha/beta',
+            'SCRIPT_NAME' => '/index.php',
+        ], $options);
+
+        self::assertStringContainsString('404 view:404', $output);
+        self::assertStringNotContainsString('title:Page with Parameters|params:alpha,beta', $output);
+        self::assertSame(
+            [
+                ['HTTP/1.1 404 Not Found', true, 404],
+                ['Status: 404 Not Found', true, null],
+            ],
+            $headers->headers
+        );
+    }
+
     /** KMVC-002-S005 */
     public function testKMVC002S005UnknownRouteProducesA404ResponsePath(): void
     {

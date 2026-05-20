@@ -134,7 +134,7 @@ final class ApplicationRunner
         return $this->headersSentChecker->headersSent();
     }
 
-    private function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
+    private function emitHeader(string $header, bool $replace, ?int $responseCode = null): void
     {
         $this->headerEmitter->emit($header, $replace, $responseCode);
     }

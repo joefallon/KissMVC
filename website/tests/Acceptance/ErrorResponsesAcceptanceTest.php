@@ -57,12 +57,12 @@ final class ErrorResponsesAcceptanceTest extends TestCase
             $headers
         );
 
-        $output = $this->runRouteRequest($options);
+        $output = $this->runRouteRequest($options, ['SERVER_PROTOCOL' => 'HTTP/2']);
 
         self::assertStringContainsString('404 Not Found', $output);
         self::assertSame(
             [
-                ['HTTP/1.1 404 Not Found', true, 404],
+                ['HTTP/2 404 Not Found', true, 404],
                 ['Status: 404 Not Found', true, null],
             ],
             $headers->headers
@@ -88,6 +88,7 @@ PHP
         $output = $this->runRouteRequest($options);
 
         self::assertStringContainsString('configured-404-view', $output);
+        self::assertStringNotContainsString('404 Not Found', $output);
         self::assertSame(
             [
                 ['HTTP/1.1 404 Not Found', true, 404],
@@ -129,12 +130,12 @@ PHP
             $headers
         );
 
-        $output = $this->runRouteRequest($options);
+        $output = $this->runRouteRequest($options, ['SERVER_PROTOCOL' => 'HTTP/2']);
 
         self::assertStringContainsString('An internal error occurred', $output);
         self::assertSame(
             [
-                ['HTTP/1.1 500 Internal Server Error', true, 500],
+                ['HTTP/2 500 Internal Server Error', true, 500],
                 ['Status: 500 Internal Server Error', true, null],
             ],
             $headers->headers
@@ -160,6 +161,7 @@ PHP
         $output = $this->runRouteRequest($options);
 
         self::assertStringContainsString('configured-500-view', $output);
+        self::assertStringNotContainsString('An internal error occurred. Please try again later.', $output);
         self::assertSame(
             [
                 ['HTTP/1.1 500 Internal Server Error', true, 500],

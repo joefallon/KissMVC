@@ -36,7 +36,6 @@ use KissMVC\Controller;
  *
  * Responsibilities (KISS):
  *  - Configure the layout and view file for the page.
- *  - Prepare any page-specific data during execute().
  *  - Expose small helper methods used by views (for example getMessage()).
  *
  * How to customize:
@@ -55,43 +54,11 @@ use KissMVC\Controller;
  */
 class IndexController extends Controller
 {
-    /**
-     * Construct and configure the controller. Child classes should call
-     * parent::__construct() and then perform lightweight setup.
-     */
     public function __construct()
     {
-        parent::__construct();
-
-        // Page metadata and template selection. Edit these to suit your page.
         $this->setPageTitle('Index');
         $this->setLayout('default.php');
         $this->setView('index.php');
-
-        // Example: add CSS or JS files that the layout will include.
-        // $this->addCssFile('styles/site.css');
-        // $this->addJavaScriptFile('js/site.js');
-    }
-
-    /**
-     * Execute business logic for this page. This method is called by the
-     * FrontController after request routing and before the layout is rendered.
-     *
-     * Keep this method small: gather data and assign it to properties or
-     * expose via public helpers so the view can render it.
-     */
-    public function execute(): void
-    {
-        // Call the parent's execute() as a no-op hook. The base implementation
-        // is intentionally empty; calling it here documents our intent and
-        // prevents IDE/static-analyzer warnings that complain when an override
-        // does not call the parent. It is harmless and future-proofs the
-        // controller should the base implementation gain behavior.
-        parent::execute();
-
-        // Default: no additional processing required for the example index
-        // page. Override or extend this method when you add page-specific
-        // logic (database calls, service orchestration, etc.).
     }
 
     /**

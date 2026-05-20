@@ -1,12 +1,16 @@
 {
-    // Keep the initial run exploratory while the mutation baseline is being established.
+    // Behavior-focused mutation baseline for core library/application code.
     timeout: 60,
+    minMsi: 90,
+    minCoveredMsi: 90,
     source: {
         directories: [
             "lib",
             "src",
         ],
         excludes: [
+            // Thin native adapters around PHP builtins are excluded from source selection.
+            "KissMVC/NativeHeaderEmitter.php",
             "KissMVC/ApplicationBuilder.php",
             "KissMVC/ApplicationRunnerOptions.php",
             "KissMVC/ControllerFactoryInterface.php",
@@ -31,7 +35,6 @@
         text: "build/mutation/text.log",
         summary: "build/mutation/summary.log",
         json: "build/mutation/report.json",
-        html: "build/mutation/report.html",
     },
     phpUnit: {
         configDir: ".",

@@ -48,32 +48,9 @@ class PageWithParametersController extends Controller
      */
     public function __construct()
     {
-        parent::__construct();
-
         $this->setPageTitle('Page with Parameters');
         $this->setLayout('default.php');
         $this->setView('page-with-parameters.php');
-    }
-
-    /**
-     * Perform page-specific processing. Called by FrontController.
-     *
-     * We call parent::execute() as a deliberate no-op hook to document intent
-     * and to silence static analyzers that expect the parent hook to be
-     * invoked. This is harmless and future-proofs the controller.
-     */
-    public function execute(): void
-    {
-        // Call the parent's no-op hook. See comment above.
-        parent::execute();
-
-        // Example: read parameters and perform trivial processing. Replace
-        // with real logic (database calls, services, validation, etc.).
-        $params = $this->getRequestParameters();
-
-        // You can use $params directly in views or expose helpers as needed.
-        // For example, to expose the first parameter as a helper, you could
-        // store it in a property here and add a getter.
     }
 
     /**

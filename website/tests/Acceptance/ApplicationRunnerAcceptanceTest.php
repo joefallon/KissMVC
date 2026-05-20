@@ -259,6 +259,7 @@ final class ApplicationRunnerAcceptanceTest extends TestCase
         self::assertSame('Invalid timezone configured: not-a-real-timezone', $errors[0][1]);
     }
 
+    /** @noinspection PhpTooManyParametersInspection */
     private function runApplication(
         array $serverOverrides,
         bool $sslRequired,
