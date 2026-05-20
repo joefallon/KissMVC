@@ -41,7 +41,7 @@
     "scripts": {
         "lint": "find lib src tests -path '*/vendor' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l",
         "test": "@php vendor/bin/phpunit --configuration phpunit.xml.dist",
-        "test:coverage": "mkdir -p build/coverage && XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover build/coverage/clover.xml > /dev/null && php scripts/coverage-summary.php build/coverage/clover.xml",
+        "test:coverage": "mkdir -p build/coverage && XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover build/coverage/clover.xml --coverage-crap4j build/coverage/crap4j.xml > /dev/null && php scripts/coverage-summary.php build/coverage/clover.xml build/coverage/crap4j.xml",
         "test:coverage:orig": "@php -d xdebug.mode=coverage vendor/bin/phpunit --configuration phpunit.xml.dist --coverage-clover build/coverage/clover.xml --coverage-html build/coverage/html --coverage-text",
         "test:mutation:sources": "@php vendor/bin/infection config:list-sources --configuration=infection.json5.dist",
         "test:mutation": "@php vendor/bin/infection --configuration=infection.json5.dist",
