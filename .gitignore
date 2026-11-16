@@ -1,3 +1,6 @@
 website/vendor
 .ai/concatenated.txt
 .ai/scale/state/*
+
+diff.diff
+.idea/*
