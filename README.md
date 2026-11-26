@@ -316,8 +316,10 @@ function routeToController(string $route): ?Controller
 Controllers are page-specific classes that:
 
 - Configure page metadata (title, layout, view).
-- Orchestrate models and services in `execute()`.
+- Implement `execute()` to prepare the response and call models and services as needed. A page that only renders a template can leave the method body empty.
 - Provide helper methods for views (e.g. `getMessage()`).
+
+`Controller` has no constructor. Concrete controllers can declare a constructor with their own dependencies.
 
 **Example: IndexController.php**
 
@@ -333,8 +335,6 @@ class IndexController extends Controller
 {
     public function __construct()
     {
-        parent::__construct();
-
         $this->setPageTitle('Home');
         $this->setLayout('default.php');
         $this->setView('index.php');
@@ -342,8 +342,6 @@ class IndexController extends Controller
 
     public function execute(): void
     {
-        parent::execute(); // Intentional no-op; silences IDE warnings
-
         // Fetch data, call models, prepare for view
     }
 
@@ -542,7 +540,6 @@ class AboutController extends Controller
 {
     public function __construct()
     {
-        parent::__construct();
         $this->setPageTitle('About Us');
         $this->setLayout('default.php');
         $this->setView('about.php');
@@ -550,7 +547,6 @@ class AboutController extends Controller
 
     public function execute(): void
     {
-        parent::execute();
         // Add page-specific logic here
     }
 

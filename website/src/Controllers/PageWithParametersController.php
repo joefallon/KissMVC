@@ -65,4 +65,13 @@ class PageWithParametersController extends Controller
 
         return $params[$index] ?? null;
     }
+
+    /**
+     * Leave request parameters available for the view to render.
+     *
+     * @return void
+     */
+    public function execute(): void
+    {
+    }
 }

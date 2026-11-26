@@ -85,4 +85,13 @@ class IndexController extends Controller
 
         return $params[$index] ?? null;
     }
+
+    /**
+     * Leave the configured index view ready for rendering.
+     *
+     * @return void
+     */
+    public function execute(): void
+    {
+    }
 }

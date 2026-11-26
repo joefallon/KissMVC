@@ -58,22 +58,11 @@ abstract class Controller
     private array $requestParameters = [];
 
     /**
-     * Constructor - initializes collections. Keep lightweight.
+     * Process the request before rendering the response.
+     *
+     * @return void
      */
-    public function __construct()
-    {
-        // Properties already have sensible typed defaults; constructor is
-        // intentionally minimal to avoid hidden side effects.
-    }
-
-    /**
-     * Perform page specific processing. Override in child controllers.
-     * Called immediately after controller instantiation.
-     */
-    public function execute(): void
-    {
-        // Default: no-op. Child controllers may and probably should override.
-    }
+    abstract public function execute(): void;
 
     /**
      * Render the selected layout file. This will "require" the file so it
@@ -166,6 +155,28 @@ abstract class Controller
     /*************************************************************************
      * Protected helpers: small methods used by concrete controllers.
      *************************************************************************/
+
+    /**
+     * Determine whether the current request uses POST. The default method is GET.
+     *
+     * @return bool True for a POST request.
+     */
+    protected function isPost(): bool
+    {
+        return ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+    }
+
+    /**
+     * Check that a submitted CSRF token matches the session token.
+     *
+     * @param string $expected Token stored in the current session.
+     * @param mixed $submittedToken Raw form field, or null when missing.
+     * @return bool True when the expected token is nonempty and matches the submitted string.
+     */
+    protected function isValidCsrfToken(string $expected, mixed $submittedToken): bool
+    {
+        return $expected !== '' && is_string($submittedToken) && hash_equals($expected, $submittedToken);
+    }
 
     /**
      * Set the layout file by name. Resolves the configured layout directory.

@@ -122,6 +122,15 @@ final class ControllerRenderingAcceptanceTest extends TestCase
         $controller = new class extends Controller {
             private string $presentationValue = 'presentation-value';
 
+            /**
+             * Leave the configured templates ready for rendering.
+             *
+             * @return void
+             */
+            public function execute(): void
+            {
+            }
+
             public function configure(string $layoutFileName, ?string $viewFileName, array $requestParameters): void
             {
                 $this->setLayout($layoutFileName);

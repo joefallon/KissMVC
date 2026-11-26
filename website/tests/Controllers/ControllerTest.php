@@ -6,6 +6,7 @@ namespace Tests\Controllers;
 use FilesystemIterator;
 use KissMVC\Application;
 use KissMVC\Controller;
+use PHPUnit\Framework\Attributes\BackupGlobals;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -69,13 +70,44 @@ final class ControllerTest extends TestCase
         self::assertNull($controller->getVersion());
     }
 
-    public function testExecuteDefaultsToANoOp(): void
+    /**
+     * Verify that only POST is detected and a missing method defaults to GET.
+     *
+     * @return void
+     */
+    #[BackupGlobals(true)]
+    public function testPostDetectionRequiresExactPostMethodAndDefaultsToGet(): void
     {
         $controller = new TestController();
 
-        $controller->execute();
+        unset($_SERVER['REQUEST_METHOD']);
+        self::assertFalse($controller->detectPost());
 
-        self::assertTrue(true);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        self::assertFalse($controller->detectPost());
+
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        self::assertTrue($controller->detectPost());
+
+        $_SERVER['REQUEST_METHOD'] = 'post';
+        self::assertFalse($controller->detectPost());
+    }
+
+    /**
+     * Verify CSRF validation rejects empty expected tokens and nonstring submissions.
+     *
+     * @return void
+     */
+    public function testCsrfValidationRequiresNonemptyExpectedStringAndMatchingSubmittedString(): void
+    {
+        $controller = new TestController();
+
+        self::assertTrue($controller->validateCsrfToken('expected-token', 'expected-token'));
+        self::assertFalse($controller->validateCsrfToken('', ''));
+        self::assertFalse($controller->validateCsrfToken('expected-token', 'different-token'));
+        self::assertFalse($controller->validateCsrfToken('expected-token', null));
+        self::assertFalse($controller->validateCsrfToken('expected-token', 123));
+        self::assertFalse($controller->validateCsrfToken('expected-token', ['expected-token']));
     }
 
     public function testGetVersionReturnsConfiguredVersion(): void
@@ -181,6 +213,37 @@ final class ControllerTest extends TestCase
 
 final class TestController extends Controller
 {
+    /**
+     * Satisfy the controller contract for tests of its shared methods.
+     *
+     * @return void
+     */
+    public function execute(): void
+    {
+    }
+
+    /**
+     * Expose POST detection to the controller tests.
+     *
+     * @return bool True for a POST request.
+     */
+    public function detectPost(): bool
+    {
+        return $this->isPost();
+    }
+
+    /**
+     * Expose CSRF token validation to the controller tests.
+     *
+     * @param string $expected Expected token.
+     * @param mixed $submittedToken Raw form field, or null when missing.
+     * @return bool True when the submitted string matches the nonempty token.
+     */
+    public function validateCsrfToken(string $expected, mixed $submittedToken): bool
+    {
+        return $this->isValidCsrfToken($expected, $submittedToken);
+    }
+
     public function configure(
         string $pageTitle,
         string $layoutFile,
