@@ -80,13 +80,13 @@ final class ApplicationRunner
             return;
         }
 
-        $isHttpsServerVar = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
-                            && $_SERVER['HTTPS'] !== '0';
+        $isHttpsServerVar = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
+                             && $_SERVER['HTTPS'] !== '0');
 
-        $isPort443 = isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443;
+        $isPort443 = (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
 
-        $isForwardedProtoHttps = !empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
-                                 && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
+        $isForwardedProtoHttps = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
+                                  && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
 
         if($isHttpsServerVar || $isPort443 || $isForwardedProtoHttps)
         {
