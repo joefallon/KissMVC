@@ -52,7 +52,7 @@ class Application
         {
             $newConfig = $returned;
         }
-        elseif(isset($config) && is_array($config))
+        elseif(is_array($config ?? null))
         {
             $newConfig = $config;
         }

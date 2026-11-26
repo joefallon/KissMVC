@@ -6,6 +6,13 @@ final class FunctionRouteResolver implements RouteResolverInterface
 {
     public function resolveRoute(string $route): ?Controller
     {
-        return function_exists('routeToController') ? routeToController($route) : null;
+        if(!function_exists('routeToController'))
+        {
+            return null;
+        }
+
+        $controller = routeToController($route);
+
+        return $controller;
     }
 }

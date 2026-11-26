@@ -38,28 +38,32 @@ final class FrontControllerBuilder
 
     public function withRequestParametersProvider(RequestParametersProviderInterface $requestParametersProvider): self
     {
-        $this->options->requestParametersProvider = $requestParametersProvider;
+        $options = $this->options;
+        $options->requestParametersProvider = $requestParametersProvider;
 
         return $this;
     }
 
     public function withRouteResolver(RouteResolverInterface $routeResolver): self
     {
-        $this->options->routeResolver = $routeResolver;
+        $options = $this->options;
+        $options->routeResolver = $routeResolver;
 
         return $this;
     }
 
     public function withHeadersSentChecker(HeadersSentCheckerInterface $headersSentChecker): self
     {
-        $this->options->headersSentChecker = $headersSentChecker;
+        $options = $this->options;
+        $options->headersSentChecker = $headersSentChecker;
 
         return $this;
     }
 
     public function withHeaderEmitter(HeaderEmitterInterface $headerEmitter): self
     {
-        $this->options->headerEmitter = $headerEmitter;
+        $options = $this->options;
+        $options->headerEmitter = $headerEmitter;
 
         return $this;
     }

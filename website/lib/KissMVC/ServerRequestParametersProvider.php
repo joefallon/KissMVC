@@ -8,15 +8,18 @@ final class ServerRequestParametersProvider implements RequestParametersProvider
     {
         $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
         $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
-        $scriptDir = $scriptName !== '' ? dirname($scriptName) : '';
+        $scriptDir = '';
 
-        if($scriptDir !== '' && $scriptDir !== '/')
+        if($scriptName !== '')
+        {
+            $scriptDir = dirname($scriptName);
+        }
+
+        $request = $requestUri;
+
+        if($this->isConfiguredScriptDirectory($scriptDir))
         {
             $request = str_replace($scriptDir, '', $requestUri);
-        }
-        else
-        {
-            $request = $requestUri;
         }
 
         $request = trim((string) $request, '/');
@@ -26,7 +29,9 @@ final class ServerRequestParametersProvider implements RequestParametersProvider
             return null;
         }
 
-        return $this->urlSegments($request);
+        $requestParameters = $this->urlSegments($request);
+
+        return $requestParameters;
     }
 
     /**
@@ -47,13 +52,27 @@ final class ServerRequestParametersProvider implements RequestParametersProvider
             }
 
             $arr = explode('?', $param, 2);
+            $segment = $arr[0] ?? '';
 
-            if(isset($arr[0]) && $arr[0] !== '')
+            if($segment !== '')
             {
-                $params[] = $arr[0];
+                $params[] = $segment;
             }
         }
 
         return $params;
+    }
+
+    /**
+     * Determine whether a script directory should be removed from the request URI.
+     *
+     * @param string $scriptDir Directory derived from SCRIPT_NAME.
+     * @return bool True when the directory is neither empty nor the root path.
+     */
+    private function isConfiguredScriptDirectory(string $scriptDir): bool
+    {
+        $isConfiguredScriptDirectory = ($scriptDir !== '' && $scriptDir !== '/');
+
+        return $isConfiguredScriptDirectory;
     }
 }

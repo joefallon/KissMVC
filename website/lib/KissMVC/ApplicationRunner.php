@@ -67,7 +67,8 @@ final class ApplicationRunner
             );
         }
 
-        $frontController = $this->frontControllerFactory->create();
+        $frontControllerFactory = $this->frontControllerFactory;
+        $frontController = $frontControllerFactory->create();
         $frontController->routeRequest();
     }
 
@@ -80,15 +81,7 @@ final class ApplicationRunner
             return;
         }
 
-        $isHttpsServerVar = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
-                             && $_SERVER['HTTPS'] !== '0');
-
-        $isPort443 = (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
-
-        $isForwardedProtoHttps = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
-                                  && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
-
-        if($isHttpsServerVar || $isPort443 || $isForwardedProtoHttps)
+        if($this->isRequestUsingHttps())
         {
             return;
         }
@@ -113,7 +106,12 @@ final class ApplicationRunner
     {
         $timezone = Application::getRegistryItem('timezone');
 
-        if(!is_string($timezone) || $timezone === '')
+        if(!is_string($timezone))
+        {
+            return;
+        }
+
+        if($timezone === '')
         {
             return;
         }
@@ -131,16 +129,41 @@ final class ApplicationRunner
 
     private function headersWereSent(): bool
     {
-        return $this->headersSentChecker->headersSent();
+        $headersSentChecker = $this->headersSentChecker;
+        $headersWereSent = $headersSentChecker->headersSent();
+
+        return $headersWereSent;
+    }
+
+    /**
+     * Determine whether the current request is already using HTTPS.
+     *
+     * @return bool True when a server variable indicates HTTPS.
+     */
+    private function isRequestUsingHttps(): bool
+    {
+        $isHttpsServerVar = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
+                             && $_SERVER['HTTPS'] !== '0');
+
+        $isPort443 = (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
+        $isForwardedProtoHttps = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
+                                  && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
+
+        $isRequestUsingHttps = $isHttpsServerVar || $isPort443 || $isForwardedProtoHttps;
+
+        return $isRequestUsingHttps;
     }
 
     private function emitHeader(string $header, bool $replace, ?int $responseCode = null): void
     {
-        $this->headerEmitter->emit($header, $replace, $responseCode);
+        $headerEmitter = $this->headerEmitter;
+        $headerEmitter->emit($header, $replace, $responseCode);
     }
 
     private function redirectToHttps(string $url): void
     {
-        $this->redirectTerminator->terminate($url);
+        $redirectTerminator = $this->redirectTerminator;
+        $redirectTerminator->terminate($url);
     }
 }

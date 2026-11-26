@@ -37,28 +37,32 @@ final class ApplicationBuilder
 
     public function withFrontControllerFactory(FrontControllerFactoryInterface $frontControllerFactory): self
     {
-        $this->options->frontControllerFactory = $frontControllerFactory;
+        $options = $this->options;
+        $options->frontControllerFactory = $frontControllerFactory;
 
         return $this;
     }
 
     public function withHeadersSentChecker(HeadersSentCheckerInterface $headersSentChecker): self
     {
-        $this->options->headersSentChecker = $headersSentChecker;
+        $options = $this->options;
+        $options->headersSentChecker = $headersSentChecker;
 
         return $this;
     }
 
     public function withHeaderEmitter(HeaderEmitterInterface $headerEmitter): self
     {
-        $this->options->headerEmitter = $headerEmitter;
+        $options = $this->options;
+        $options->headerEmitter = $headerEmitter;
 
         return $this;
     }
 
     public function withRedirectTerminator(RedirectTerminatorInterface $redirectTerminator): self
     {
-        $this->options->redirectTerminator = $redirectTerminator;
+        $options = $this->options;
+        $options->redirectTerminator = $redirectTerminator;
 
         return $this;
     }

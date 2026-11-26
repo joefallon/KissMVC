@@ -92,7 +92,7 @@ abstract class Controller
     public function renderPartial(string $fileName, array $data = []): void
     {
         $dir = Application::getRegistryItem('partials_directory');
-        $partialsDir = is_string($dir) ? $dir : '';
+        $partialsDir = $this->getConfiguredDirectory($dir);
 
         $filePath = $partialsDir . DIRECTORY_SEPARATOR . $fileName;
 
@@ -122,7 +122,12 @@ abstract class Controller
     {
         $version = Application::getRegistryItem('version');
 
-        return is_string($version) ? $version : null;
+        if(!is_string($version))
+        {
+            return null;
+        }
+
+        return $version;
     }
 
     /**
@@ -186,7 +191,7 @@ abstract class Controller
     protected function setLayout(string $layoutFileName): void
     {
         $dir = Application::getRegistryItem('layouts_directory');
-        $layoutsDir = is_string($dir) ? $dir : '';
+        $layoutsDir = $this->getConfiguredDirectory($dir);
 
         $this->layoutPath = $layoutsDir . DIRECTORY_SEPARATOR . $layoutFileName;
     }
@@ -199,7 +204,7 @@ abstract class Controller
     protected function setView(string $viewFileName): void
     {
         $dir = Application::getRegistryItem('views_directory');
-        $viewsDir = is_string($dir) ? $dir : '';
+        $viewsDir = $this->getConfiguredDirectory($dir);
 
         $this->viewPath = $viewsDir . DIRECTORY_SEPARATOR . $viewFileName;
     }
@@ -232,5 +237,21 @@ abstract class Controller
     protected function setPageTitle(string $pageTitle): void
     {
         $this->pageTitle = $pageTitle;
+    }
+
+    /**
+     * Return a configured directory string, or an empty string for other values.
+     *
+     * @param mixed $directory Registry value to validate.
+     * @return string Configured directory, preserving empty strings.
+     */
+    private function getConfiguredDirectory(mixed $directory): string
+    {
+        if(!is_string($directory))
+        {
+            return '';
+        }
+
+        return $directory;
     }
 }

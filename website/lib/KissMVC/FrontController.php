@@ -170,7 +170,10 @@ class FrontController
      */
     protected function getRequestParameters(): ?array
     {
-        return $this->requestParametersProvider->getRequestParameters();
+        $requestParametersProvider = $this->requestParametersProvider;
+        $requestParameters = $requestParametersProvider->getRequestParameters();
+
+        return $requestParameters;
     }
 
     /**
@@ -179,7 +182,10 @@ class FrontController
      */
     protected function resolveController(string $route): ?Controller
     {
-        return $this->routeResolver->resolveRoute($route);
+        $routeResolver = $this->routeResolver;
+        $controller = $routeResolver->resolveRoute($route);
+
+        return $controller;
     }
 
     /**
@@ -253,7 +259,10 @@ class FrontController
      */
     protected function headersWereSent(): bool
     {
-        return $this->headersSentChecker->headersSent();
+        $headersSentChecker = $this->headersSentChecker;
+        $headersWereSent = $headersSentChecker->headersSent();
+
+        return $headersWereSent;
     }
 
     /**
@@ -261,6 +270,7 @@ class FrontController
      */
     protected function emitHeader(string $header, bool $replace = true, ?int $responseCode = null): void
     {
-        $this->headerEmitter->emit($header, $replace, $responseCode);
+        $headerEmitter = $this->headerEmitter;
+        $headerEmitter->emit($header, $replace, $responseCode);
     }
 }
