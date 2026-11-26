@@ -45,7 +45,9 @@ namespace KissMVC;
  * {
  *     public static function create(): Controller
  *     {
- *         return new IndexController();
+ *         $controller = new IndexController();
+ *
+ *         return $controller;
  *     }
  * }
  */

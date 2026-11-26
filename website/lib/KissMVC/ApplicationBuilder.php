@@ -65,6 +65,8 @@ final class ApplicationBuilder
 
     public function build(): ApplicationRunner
     {
-        return new ApplicationRunner($this->options);
+        $applicationRunner = new ApplicationRunner($this->options);
+
+        return $applicationRunner;
     }
 }

@@ -6,6 +6,8 @@ final class DefaultFrontControllerFactory implements FrontControllerFactoryInter
 {
     public function create(): FrontController
     {
-        return new FrontController();
+        $frontController = new FrontController();
+
+        return $frontController;
     }
 }

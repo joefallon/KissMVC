@@ -66,6 +66,8 @@ final class FrontControllerBuilder
 
     public function build(): FrontController
     {
-        return new FrontController($this->options);
+        $frontController = new FrontController($this->options);
+
+        return $frontController;
     }
 }
